@@ -181,6 +181,7 @@ purchase_balance_tbl %>%
 # *************************************************************************
 
 # 4.1 Tenure = 10 Cohort ----
+# - Filtering down the data to focus on a the cohort of customers with tenure = 10
 analysis_cohort_tbl <- customer_tbl %>% 
     filter(tenure == 10) %>% 
     drop_na() %>% 
@@ -216,17 +217,6 @@ normalized_tbl %>%
 # *************************************************************************
 # 6.0 K-MEANS ----
 # *************************************************************************
-
-# * K-Means Object ----
-# kmeans_obj <- normalized_tbl %>% 
-#     kmeans(centers = 4, nstart = 100)
-# 
-# 
-# # * Tidying K-Means Object ----
-# broom::tidy(kmeans_obj) %>% glimpse()
-# 
-# broom::augment(kmeans_obj, normalized_tbl)
-
 
 # 6.1 Optimal Centers Function ----
 kmeans_mapper <- function(centers = 3) {
