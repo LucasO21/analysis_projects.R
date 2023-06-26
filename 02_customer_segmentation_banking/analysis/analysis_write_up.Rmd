@@ -74,6 +74,8 @@ To implement customer segmentation using the k-means algorithm, financial instit
 The following pages, walk through a detailed case study of customer segmentation and 
 persona creation using the k-means algorithm.
 
+__Disclaimer:__ Please note that the author of this analysis is not a banking/financial industry expert. This data analysis project is based on a general understanding of customer analytics. The recommendations provided regarding financial products are based on online research. Implementing these recommendations in the real world requires expert opinion and consideration of specific regulatory, market, and business factors.
+
 \newpage
 
 
@@ -103,12 +105,14 @@ default, which in turn reduces the risk to the financial institutions.
 The analysis approach involves several steps, starting with explanatory data analysis 
 to gain insights into the data. Next, the k-means algorithm is used to identify clusters 
 in the data based on shared characteristics of customers. The UMAP algorithm is then used 
-to plot the clusters in two or three dimensions, making it easier to visualize the clusters. 
+to plot the clusters in two dimension, making it easier to visualize the clusters. 
 The analysis of the clusters is then performed to understand the unique characteristics and 
 needs of each group and then create customer personas. Finally, based on the insights gained, 
 recommendations on product offerings are made to address the needs of each cluster/persona and 
 improve the overall customer experience. This approach can be used in a variety of industries 
 to better understand customer behavior and tailor services and products to meet their needs.
+
+__Note:__ All analysis are performed using the R programming language.
 
 ---
 
@@ -204,7 +208,7 @@ in is the **credit card utilization**. While not explicitly shown in the dataset
 can easily add this feature by dividing the *balance* by *credit_limit*. 
 
 **What is Credit Utilization**. Credit Utilization is a measure of how much of a customer's
-available credit they are currently using. It is calculated by dividing the amount of
+available credit is currently being utilized. It is calculated by dividing the amount of
 credit the customer is currently using by their total available credit limit. Credit utilization
 is an important factor for banks and credit card companies because it is one of the 
 key metrics used to assess a borrower's credit worthiness. High levels of credit utilization
@@ -273,7 +277,7 @@ who are potentially using their credit cards for taking out loans:
 knitr::include_graphics("../png/04_purchase_balance_cohorts.png")
 ```
 
-**Observation:** We can observe a few standout cohorts:
+**Observation:** We can observe the behaviors of the 4 cohorts:
 
 * High Purchase / High Balance - These customers are potentially using their credit card
 for all of their purchases to perhaps accumulate points, and are maintaining a high balance.
@@ -421,10 +425,7 @@ The plot below shows our cluster assignments from the k-means algorithm:
 knitr::include_graphics("../png/05_cluster_viz.png")
 ```
 
-**Observation:** We can see the k-means algorithm does a good job of segmenting customers. 
-While not completely perfect, we can see 4 distinct segments with a few customers that
-should probably be re-clustered, although a 3 dimensional plot may present a different perspective.
-Next we can analyze these clusters in-depth. 
+**Observation:** Although not perfect, the k-means algorithm does a decent job of segmenting customers. We can see 4 distinct segments with a few customers that should probably be re-clustered, although a 3 dimensional plot may present a different perspective.
 
 ---
 
@@ -489,7 +490,7 @@ levels of use for their credit cards.
 
 ## __Customer Persona / Product Recommendations__
 
-Based on the analysis in the previous section. We can thus finalize our customer personas
+Based on the analysis in the previous section. We can thus create customer personas
 and come up with product recommendations to be marketed to these customers. We'll do this
 using the following format; ***Cluster***, ***Persona Name***, ***Description***, ***Stats***, 
 ***Product Recommendations***.
