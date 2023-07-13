@@ -14,6 +14,7 @@ library(tidyverse)
 library(janitor)
 library(readxl)
 library(lubridate)
+library(tidyverse)
 
 # *****************************************************************************
 # DATA IMPORT ----
@@ -50,30 +51,106 @@ corr_tbl <- data_tbl %>%
         axis.text.x = element_text(angle = 15, vjust = 1, hjust = 1)
     )
 
-# * Account Sub vs TV GRP ----
-data_tbl %>% 
-    select(date, accounts_subscriptions, tv_grp) %>% 
-    pivot_longer(c(accounts_subscriptions, tv_grp)) %>% 
-    ggplot(aes(date, value, color = name))+
-    geom_line(linewidth = 1)
 
-data_tbl %>% 
-    select(date, accounts_subscriptions, tv_grp, google_brand_paid_search_clicks,
-           meta_impressions, you_tube_impressions) %>% 
-    pivot_longer(!c(date, accounts_subscriptions)) %>% 
-    ggplot(aes(date, value, color = name))+
-    geom_line(linewidth = 1)+
-    facet_wrap(~ name, scales = "free_x")
+# * Account Sub vs TV GRP ----
+
+get_line_plot <- function(data, var) {
+    df <- data %>% 
+        select(date, accounts_subscriptions, rlang::sym(var)) %>% 
+        pivot_longer(c(accounts_subscriptions, rlang::sym(var)))
     
+    p <-  df %>% 
+        ggplot(aes(date, value, color = name))+
+        geom_line(linewidth = 1)+
+        theme_bw()+
+        scale_x_date(date_breaks = "4 months")+
+        theme(
+            legend.position = "bottom"
+        )+
+        scale_color_discrete(name = "")
+        
+    
+    return(p)
+}
+
+get_scatter_plot <- function(data, var) {
+    p <- data %>% 
+        ggplot(aes(accounts_subscriptions, rlang::sym(var)))+
+        geom_point(size = 1.5)+
+        geom_smooth(method = loess, se = FALSE)
+    
+    return(p)
+}
 
 data_tbl %>% 
     ggplot(aes(accounts_subscriptions, tv_grp))+
-    geom_point()
+    geom_point(size = 1.5)+
+    geom_smooth(method = loess, se = FALSE)
+    
+    
+
+get_line_plot(data_tbl, var = "tv_grp")
+
+get_line_plot(data_tbl, var = "meta_impressions")
+
+
+# Dual Axis Line Plot ----
+p1 <- data_tbl %>% 
+    mutate(meta_impressions = meta_impressions/1000) %>% 
+    ggplot(aes(x = date))+
+    geom_line(aes(y = accounts_subscriptions, color = "Subscriptions"), linewidth = 1)+
+    geom_line(aes(y = meta_impressions, color = "Meta Impressions"), linewidth = 1) +
+    scale_color_manual(
+        values = c("blue", "red"),
+        labels = c("Subscriptions", "Meta Impressions"),
+        name = ""
+    )+
+    scale_y_continuous(
+        name = "Subscriptions",
+        sec.axis = sec_axis(
+            ~ .,
+            name = "Meta Impressions",
+            breaks = seq(0, 10000, 2500),
+            labels = scales::comma
+        )
+    )+
+    theme_bw()+
+    theme(
+        legend.position = c(0.95, 0.9),
+        legend.justification = c(1, 1)
+    )
+
+
+get_line_plot(data_tbl, var = "dates_school_holidays")
+
+p2 <- data_tbl %>% 
+    ggplot(aes(accounts_subscriptions, meta_impressions))+
+    geom_point(size = 1.5)+
+    geom_smooth(method = loess)
+
+gt <- arrangeGrob(p1, p2)
+
+p1/p2
+
 
 
 # *****************************************************************************
-# SECTION NAME ----
+# REGRESSION (RAW DATA) ----
 # *****************************************************************************
+
+# Regression ----
+lm_fit <- lm(
+    formula = accounts_subscriptions ~ .,
+    data    = data_tbl %>% select(-date)
+)
+
+lm_summary <- broom::tidy(lm_fit) %>% 
+    mutate(stat_sig = ifelse(p.value < 0.05, "yes", "no"))
+    
+lm_params <- broom::glance(lm_fit)
+
+
+
 # *****************************************************************************
 # SECTION NAME ----
 # *****************************************************************************
