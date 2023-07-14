@@ -138,16 +138,104 @@ p1/p2
 # REGRESSION (RAW DATA) ----
 # *****************************************************************************
 
-# Regression ----
+# * Regression ----
 lm_fit <- lm(
     formula = accounts_subscriptions ~ .,
     data    = data_tbl %>% select(-date)
 )
 
+# * Regression Output ----
 lm_summary <- broom::tidy(lm_fit) %>% 
     mutate(stat_sig = ifelse(p.value < 0.05, "yes", "no"))
     
 lm_params <- broom::glance(lm_fit)
+
+
+# *****************************************************************************
+# DATA TRANSFORMATION ----
+# *****************************************************************************
+
+# - Adstock (carry over effect of media advertising on the consumer)
+
+# Functions ----
+get_adstock <- function(data, var, lambda) {
+    adstock <- numeric(nrow(data))
+    
+    for (i in 1:nrow(data)) {
+        if (i == 1) {
+            adstock[i] = data[[var]][i]
+        } else {
+            adstock[i] = data[[var]][i] + (1 - lambda) * adstock[i - 1]
+        }
+    }
+    
+    data[paste0({{var}}, "_adstock_", lambda)] <- adstock
+    
+    return(data)
+}
+
+
+get_adstock_plot <- function(data, var, legend_position = "bottom",
+                             scale_y = FALSE, scale = 1000) {
+    
+    df <- data %>% 
+        select(date, starts_with({{var}})) %>% 
+        pivot_longer(!date) %>% 
+        mutate(name = fct_reorder(name, value) %>% fct_rev)
+    
+    if (scale_y) {
+        p <- df %>% 
+            ggplot(aes(x = date, y = value/scale, fill = name))
+    } else {
+        p <- df %>% 
+            ggplot(aes(x = date, y = value, fill = name))
+    }
+    
+    p <- p+
+        geom_area(position = "identity", alpha = 0.9, color = "grey30")+
+        scale_fill_brewer(palette = "Pastel1", name = "")+
+        scale_x_date(date_breaks = "4 months")+
+        theme_bw()+
+        theme(
+            # legend.position = c(0.95, 0.9),
+            # legend.justification = c(1, 1),
+            legend.position = legend_position,
+            legend.key.size = unit(0.5, 'cm')
+        )
+    
+    return(p)
+    
+}
+
+# * Data Transformation ----
+media_adstock_tbl <- data_tbl %>% 
+    select(date, tv_grp, you_tube_impressions, meta_impressions, influencers_views) %>%  
+    setNames(names(.) %>% str_replace_all("impressions", "imp")) %>% 
+    get_adstock("tv_grp", lambda = 0.5) %>% 
+    get_adstock("tv_grp", lambda = 0.7) %>% 
+    get_adstock("tv_grp", lambda = 0.9) %>% 
+    get_adstock("you_tube_imp", lambda = 0.5) %>% 
+    get_adstock("you_tube_imp", lambda = 0.7) %>% 
+    get_adstock("you_tube_imp", lambda = 0.9) %>% 
+    get_adstock("meta_imp", lambda = 0.5) %>% 
+    get_adstock("meta_imp", lambda = 0.7) %>% 
+    get_adstock("meta_imp", lambda = 0.9) %>% 
+    get_adstock("influencers_views", lambda = 0.5) %>% 
+    get_adstock("influencers_views", lambda = 0.7) %>% 
+    get_adstock("influencers_views", lambda = 0.9)
+
+media_adstock_tbl %>% View()
+    
+
+# * Visualization ----
+get_adstock_plot(media_adstock_tbl, "tv_grp")
+
+get_adstock_plot(media_adstock_tbl, "you_tube_imp", scale_y = TRUE)
+
+get_adstock_plot(media_adstock_tbl, "meta_imp", scale_y = TRUE, scale = 10000)
+
+get_adstock_plot(media_adstock_tbl, "influencers_views", scale_y = FALSE)
+
 
 
 
