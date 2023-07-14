@@ -40,7 +40,9 @@ data_tbl %>% sapply(function(x) sum(is.na(x)))
 corr_tbl <- data_tbl %>% 
     select(-date) %>% 
     cor() %>% 
-    round(digits = 2) %>% 
+    round(digits = 2) 
+
+corr_tbl %>% 
     reshape2::melt() %>% 
     as_tibble() %>% 
     ggplot(aes(Var1, Var2, fill = value))+
@@ -51,6 +53,13 @@ corr_tbl <- data_tbl %>%
     theme(
         axis.text.x = element_text(angle = 15, vjust = 1, hjust = 1)
     )
+
+corr_subscriptions <- corr_tbl[, "accounts_subscriptions"]
+
+
+tibble(feature = names(corr_subscriptions), correlation = corr_subscriptions) %>% 
+    filter(feature != "accounts_subscriptions") %>% 
+    arrange(desc(correlation))
 
 
 # * Account Sub vs TV GRP ----
@@ -154,12 +163,12 @@ lm_params <- broom::glance(lm_fit)
 
 
 # *****************************************************************************
-# DATA TRANSFORMATION ----
+# ADSTOCK DATA TRANSFORMATION ----
 # *****************************************************************************
 
 # - Adstock (carry over effect of media advertising on the consumer)
 
-# Functions ----
+# * Functions ----
 get_adstock <- function(data, var, lambda) {
     
     adstock <- numeric(nrow(data))
@@ -198,7 +207,7 @@ get_adstock_plot <- function(data, var, legend_position = "bottom",
     
     p <- p+
         geom_area(position = "identity", alpha = alpha, color = "grey30", linewidth = 0.3)+
-        scale_fill_brewer(palette = "Pastel1", name = "")+
+        scale_fill_brewer(palette = "BuPu", name = "", direction = -1)+
         scale_x_date(date_breaks = "4 months")+
         theme_bw()+
         theme(
@@ -207,7 +216,7 @@ get_adstock_plot <- function(data, var, legend_position = "bottom",
             legend.position = legend_position,
             legend.key.size = unit(0.5, 'cm')
         )+
-        guides(fill = guide_legend(reverse = T))
+        guides(fill = guide_legend(reverse = TRUE))
     
     return(p)
     
@@ -215,14 +224,15 @@ get_adstock_plot <- function(data, var, legend_position = "bottom",
 
 # * Data Transformation ----
 media_tbl <- data_tbl %>% 
-    select(date, tv_grp, you_tube_imp, influencers_views)
+    select(date, tv_grp, you_tube_imp, meta_imp, influencers_views)
 
 adstock_lambda_values <- c(0.5, 0.7, 0.9)
 
 media_adstock_tbl <- bind_cols(
-    media_tbl %>% select(date),
+    media_tbl,
     bind_cols(map(adstock_lambda_values, ~ get_adstock(media_tbl, "tv_grp", .x))),
     bind_cols(map(adstock_lambda_values, ~ get_adstock(media_tbl, "you_tube_imp", .x))),
+    bind_cols(map(adstock_lambda_values, ~ get_adstock(media_tbl, "meta_imp", .x))),
     bind_cols(map(adstock_lambda_values, ~ get_adstock(media_tbl, "influencers_views", .x)))
 ) 
 
@@ -232,7 +242,7 @@ media_adstock_tbl %>% View()
 # * Visualization ----
 get_adstock_plot(media_adstock_tbl, "tv_grp")
 
-get_adstock_plot(media_adstock_tbl, "you_tube_imp", scale_y = TRUE)
+get_adstock_plot(media_adstock_tbl, "you_tube_imp", scale_y = TRUE, scale = 1000)
 
 get_adstock_plot(media_adstock_tbl, "meta_imp", scale_y = TRUE, scale = 1000000)
 
@@ -240,58 +250,116 @@ get_adstock_plot(media_adstock_tbl, "influencers_views", scale_y = FALSE)
 
 
 # *****************************************************************************
-# SECTION NAME ----
-# *****************************************************************************
-# *****************************************************************************
-# SECTION NAME ----
+# DIMINISHING RETURNS TRANSFORMATION ----
 # *****************************************************************************
 
-multiply_column <- function(data, column_name, lambda) {
-    
-    data <- data %>%
-        bind_cols(
-            lambda %>%
-                map_dfc(\(l) {
-                    new_column_name <- paste(column_name, l, sep = "_")
-                    data %>%
-                        select(!!sym(column_name)) %>%
-                        mutate(!!new_column_name := !!sym(column_name) * l) %>%
-                        select(!!new_column_name)
-                }) 
-        )
-    
-    return(data)
-}
+# - Applied on the adstock data
 
-
-
-get_adstock <- function(data, var, lambda) {
+# * Functions ----
+get_decay <- function(data, var, alpha) {
     
-    adstock <- numeric(nrow(data))
+    df <- data[[var]] ^ alpha
     
-    for (i in 1:nrow(data)) {
-        if (i == 1) {
-            adstock[i] = data[[var]][i]
-        } else {
-            adstock[i] = data[[var]][i] + (1 - lambda) * adstock[i - 1]
-        }
-    }
-    
-    ret <- adstock %>% 
+    ret <- df %>% 
         as_tibble() %>% 
-        `colnames<-`(c(paste0({{var}}, "_adstock_", lambda)))
+        `colnames<-`(c(paste0({{var}}, "_dr_", alpha)))
     
     return(ret)
 }
 
-lambda_values <- c(0.5, 0.7, 0.9)
+get_decay(media_adstock_tbl, "you_tube_imp_adstock_0.9", alpha = 0.3)
 
-# Apply the get_adstock function to each lambda value using map
-adstock_results <- map(lambda_values, ~ get_adstock(data, "tv_grp", .x))
+# * Data Transformation ----
 
-# Combine the resulting tibbles into a single dataframe
-adstock_df <- bind_cols(adstock_results)
+# ** Alpha Values ----
+dr_alpha_values <- c(0.3, 0.4, 0.5, 0.6)
 
+# ** Youtube Decay Data ----
+youtube_decay_tbl <- bind_cols(
+    bind_cols(map(dr_alpha_values, ~ get_decay(media_adstock_tbl, "you_tube_imp_adstock_0.5", .x))),
+    bind_cols(map(dr_alpha_values, ~ get_decay(media_adstock_tbl, "you_tube_imp_adstock_0.7", .x))),
+    bind_cols(map(dr_alpha_values, ~ get_decay(media_adstock_tbl, "you_tube_imp_adstock_0.9", .x)))
+) 
+
+youtube_decay_tbl %>% View()
+
+# ** TV GRP Decay Data ----
+tv_grp_decay_tbl <- bind_cols(
+    bind_cols(map(dr_alpha_values, ~ get_decay(media_adstock_tbl, "tv_grp_adstock_0.5", .x))),
+    bind_cols(map(dr_alpha_values, ~ get_decay(media_adstock_tbl, "tv_grp_adstock_0.7", .x))),
+    bind_cols(map(dr_alpha_values, ~ get_decay(media_adstock_tbl, "tv_grp_adstock_0.9", .x)))
+)
+
+tv_grp_decay_tbl %>% View()
+
+# ** Meta Decay Data ----
+meta_decay_tbl <- bind_cols(
+    bind_cols(map(dr_alpha_values, ~ get_decay(media_adstock_tbl, "meta_imp_adstock_0.5", .x))),
+    bind_cols(map(dr_alpha_values, ~ get_decay(media_adstock_tbl, "meta_imp_adstock_0.7", .x))),
+    bind_cols(map(dr_alpha_values, ~ get_decay(media_adstock_tbl, "meta_imp_adstock_0.9", .x)))
+)
+
+meta_decay_tbl %>% View()
+
+# ** Influencers Decay Data ----
+influencers_decay_tbl <- bind_cols(
+    bind_cols(map(dr_alpha_values, ~ get_decay(media_adstock_tbl, "influencers_views_adstock_0.5", .x))),
+    bind_cols(map(dr_alpha_values, ~ get_decay(media_adstock_tbl, "influencers_views_adstock_0.7", .x))),
+    bind_cols(map(dr_alpha_values, ~ get_decay(media_adstock_tbl, "influencers_views_adstock_0.9", .x)))
+)
+
+influencers_decay_tbl %>% View()
+
+# ** Final Decay Data ----
+final_features_tbl <- bind_cols(
+    data_tbl,
+    media_adstock_tbl %>% select(-c(date, tv_grp, you_tube_imp, meta_imp, influencers_views)),
+    tv_grp_decay_tbl,
+    youtube_decay_tbl,
+    meta_decay_tbl,
+    influencers_decay_tbl
+)
+
+final_features_tbl %>% glimpse()
+
+
+# *****************************************************************************
+# CORRELATION ANALYSIS (TRANSFORMED FEATURES) ----
+# *****************************************************************************
+
+# * Correlation Analysis ----
+get_correlation <- function(data, target) {
+    
+    df <- data %>% 
+        select(-date) %>% 
+        cor() %>% 
+        round(digits = 2) 
+    
+    corr_target <- df[, target]
+    
+    ret <- tibble(
+        feature = names(corr_target), correlation = corr_target
+    ) %>% 
+        filter(feature != target) %>% 
+        arrange(desc(correlation)) 
+    
+    return(ret)
+}
+
+get_correlation(data = data_tbl, target = "accounts_subscriptions")
+
+get_correlation(data = final_features_tbl, target = "accounts_subscriptions")
+
+
+
+
+
+# *****************************************************************************
+# SECTION NAME ----
+# *****************************************************************************
+# *****************************************************************************
+# SECTION NAME ----
+# *****************************************************************************
 
 
 
