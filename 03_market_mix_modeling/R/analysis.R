@@ -22,7 +22,8 @@ library(tidyverse)
 data_tbl <- read_xlsx("../data/Project_Data.xlsx") %>% 
     as_tibble() %>% 
     clean_names() %>% 
-    mutate(date = as.Date(date))
+    mutate(date = as.Date(date)) %>% 
+    setNames(names(.) %>% str_replace_all("impressions", "imp"))
 
 data_tbl %>% glimpse()
 
@@ -55,6 +56,7 @@ corr_tbl <- data_tbl %>%
 # * Account Sub vs TV GRP ----
 
 get_line_plot <- function(data, var) {
+    
     df <- data %>% 
         select(date, accounts_subscriptions, rlang::sym(var)) %>% 
         pivot_longer(c(accounts_subscriptions, rlang::sym(var)))
@@ -159,6 +161,7 @@ lm_params <- broom::glance(lm_fit)
 
 # Functions ----
 get_adstock <- function(data, var, lambda) {
+    
     adstock <- numeric(nrow(data))
     
     for (i in 1:nrow(data)) {
@@ -169,9 +172,11 @@ get_adstock <- function(data, var, lambda) {
         }
     }
     
-    data[paste0({{var}}, "_adstock_", lambda)] <- adstock
+    ret <- adstock %>% 
+        as_tibble() %>% 
+        `colnames<-`(c(paste0({{var}}, "_adstock_", lambda)))
     
-    return(data)
+    return(ret)
 }
 
 
@@ -209,21 +214,17 @@ get_adstock_plot <- function(data, var, legend_position = "bottom",
 }
 
 # * Data Transformation ----
-media_adstock_tbl <- data_tbl %>% 
-    select(date, tv_grp, you_tube_impressions, meta_impressions, influencers_views) %>%  
-    setNames(names(.) %>% str_replace_all("impressions", "imp")) %>% 
-    get_adstock("tv_grp", lambda = 0.5) %>% 
-    get_adstock("tv_grp", lambda = 0.7) %>% 
-    get_adstock("tv_grp", lambda = 0.9) %>% 
-    get_adstock("you_tube_imp", lambda = 0.5) %>% 
-    get_adstock("you_tube_imp", lambda = 0.7) %>% 
-    get_adstock("you_tube_imp", lambda = 0.9) %>% 
-    get_adstock("meta_imp", lambda = 0.5) %>% 
-    get_adstock("meta_imp", lambda = 0.7) %>% 
-    get_adstock("meta_imp", lambda = 0.9) %>% 
-    get_adstock("influencers_views", lambda = 0.5) %>% 
-    get_adstock("influencers_views", lambda = 0.7) %>% 
-    get_adstock("influencers_views", lambda = 0.9)
+media_tbl <- data_tbl %>% 
+    select(date, tv_grp, you_tube_imp, influencers_views)
+
+adstock_lambda_values <- c(0.5, 0.7, 0.9)
+
+media_adstock_tbl <- bind_cols(
+    media_tbl %>% select(date),
+    bind_cols(map(adstock_lambda_values, ~ get_adstock(media_tbl, "tv_grp", .x))),
+    bind_cols(map(adstock_lambda_values, ~ get_adstock(media_tbl, "you_tube_imp", .x))),
+    bind_cols(map(adstock_lambda_values, ~ get_adstock(media_tbl, "influencers_views", .x)))
+) 
 
 media_adstock_tbl %>% View()
     
@@ -233,16 +234,66 @@ get_adstock_plot(media_adstock_tbl, "tv_grp")
 
 get_adstock_plot(media_adstock_tbl, "you_tube_imp", scale_y = TRUE)
 
-get_adstock_plot(media_adstock_tbl, "meta_imp", scale_y = TRUE, scale = 10000)
+get_adstock_plot(media_adstock_tbl, "meta_imp", scale_y = TRUE, scale = 1000000)
 
 get_adstock_plot(media_adstock_tbl, "influencers_views", scale_y = FALSE)
 
 
-
-
 # *****************************************************************************
 # SECTION NAME ----
 # *****************************************************************************
 # *****************************************************************************
 # SECTION NAME ----
 # *****************************************************************************
+
+multiply_column <- function(data, column_name, lambda) {
+    
+    data <- data %>%
+        bind_cols(
+            lambda %>%
+                map_dfc(\(l) {
+                    new_column_name <- paste(column_name, l, sep = "_")
+                    data %>%
+                        select(!!sym(column_name)) %>%
+                        mutate(!!new_column_name := !!sym(column_name) * l) %>%
+                        select(!!new_column_name)
+                }) 
+        )
+    
+    return(data)
+}
+
+
+
+get_adstock <- function(data, var, lambda) {
+    
+    adstock <- numeric(nrow(data))
+    
+    for (i in 1:nrow(data)) {
+        if (i == 1) {
+            adstock[i] = data[[var]][i]
+        } else {
+            adstock[i] = data[[var]][i] + (1 - lambda) * adstock[i - 1]
+        }
+    }
+    
+    ret <- adstock %>% 
+        as_tibble() %>% 
+        `colnames<-`(c(paste0({{var}}, "_adstock_", lambda)))
+    
+    return(ret)
+}
+
+lambda_values <- c(0.5, 0.7, 0.9)
+
+# Apply the get_adstock function to each lambda value using map
+adstock_results <- map(lambda_values, ~ get_adstock(data, "tv_grp", .x))
+
+# Combine the resulting tibbles into a single dataframe
+adstock_df <- bind_cols(adstock_results)
+
+
+
+
+
+
