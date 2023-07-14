@@ -176,7 +176,7 @@ get_adstock <- function(data, var, lambda) {
 
 
 get_adstock_plot <- function(data, var, legend_position = "bottom",
-                             scale_y = FALSE, scale = 1000) {
+                             scale_y = FALSE, scale = 1000, alpha = 0.8) {
     
     df <- data %>% 
         select(date, starts_with({{var}})) %>% 
@@ -192,7 +192,7 @@ get_adstock_plot <- function(data, var, legend_position = "bottom",
     }
     
     p <- p+
-        geom_area(position = "identity", alpha = 0.9, color = "grey30")+
+        geom_area(position = "identity", alpha = alpha, color = "grey30", linewidth = 0.3)+
         scale_fill_brewer(palette = "Pastel1", name = "")+
         scale_x_date(date_breaks = "4 months")+
         theme_bw()+
@@ -201,7 +201,8 @@ get_adstock_plot <- function(data, var, legend_position = "bottom",
             # legend.justification = c(1, 1),
             legend.position = legend_position,
             legend.key.size = unit(0.5, 'cm')
-        )
+        )+
+        guides(fill = guide_legend(reverse = T))
     
     return(p)
     
