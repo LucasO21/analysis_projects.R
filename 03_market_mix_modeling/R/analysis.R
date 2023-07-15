@@ -183,7 +183,7 @@ get_adstock <- function(data, var, lambda) {
     
     ret <- adstock %>% 
         as_tibble() %>% 
-        `colnames<-`(c(paste0({{var}}, "_adstock_", lambda)))
+        `colnames<-`(c(paste0({{var}}, "_ad_", lambda)))
     
     return(ret)
 }
@@ -223,11 +223,15 @@ get_adstock_plot <- function(data, var, legend_position = "bottom",
 }
 
 # * Data Transformation ----
+
+# ** Media Tibble ----
 media_tbl <- data_tbl %>% 
     select(date, tv_grp, you_tube_imp, meta_imp, influencers_views)
 
+# ** Lambda Values ----
 adstock_lambda_values <- c(0.5, 0.7, 0.9)
 
+# ** Media Transformed Tibble ----
 media_adstock_tbl <- bind_cols(
     media_tbl,
     bind_cols(map(adstock_lambda_values, ~ get_adstock(media_tbl, "tv_grp", .x))),
@@ -236,7 +240,8 @@ media_adstock_tbl <- bind_cols(
     bind_cols(map(adstock_lambda_values, ~ get_adstock(media_tbl, "influencers_views", .x)))
 ) 
 
-media_adstock_tbl %>% View()
+# media_adstock_tbl %>% View()
+media_adstock_tbl %>% glimpse()
     
 
 # * Visualization ----
@@ -256,7 +261,7 @@ get_adstock_plot(media_adstock_tbl, "influencers_views", scale_y = FALSE)
 # - Applied on the adstock data
 
 # * Functions ----
-get_decay <- function(data, var, alpha) {
+get_saturation <- function(data, var, alpha) {
     
     df <- data[[var]] ^ alpha
     
@@ -267,60 +272,76 @@ get_decay <- function(data, var, alpha) {
     return(ret)
 }
 
-get_decay(media_adstock_tbl, "you_tube_imp_adstock_0.9", alpha = 0.3)
 
-# * Data Transformation ----
-
-# ** Alpha Values ----
-dr_alpha_values <- c(0.3, 0.4, 0.5, 0.6)
+# * Alpha Values ----
+alpha_values <- c(0.3, 0.4, 0.5)
 
 # ** Youtube Decay Data ----
-youtube_decay_tbl <- bind_cols(
-    bind_cols(map(dr_alpha_values, ~ get_decay(media_adstock_tbl, "you_tube_imp_adstock_0.5", .x))),
-    bind_cols(map(dr_alpha_values, ~ get_decay(media_adstock_tbl, "you_tube_imp_adstock_0.7", .x))),
-    bind_cols(map(dr_alpha_values, ~ get_decay(media_adstock_tbl, "you_tube_imp_adstock_0.9", .x)))
+youtube_saturation_tbl <- bind_cols(
+    bind_cols(map(alpha_values, ~ get_saturation(media_adstock_tbl, "you_tube_imp_ad_0.5", .x))),
+    bind_cols(map(alpha_values, ~ get_saturation(media_adstock_tbl, "you_tube_imp_ad_0.7", .x))),
+    bind_cols(map(alpha_values, ~ get_saturation(media_adstock_tbl, "you_tube_imp_ad_0.9", .x)))
 ) 
 
-youtube_decay_tbl %>% View()
+# youtube_saturation_tbl %>% View()
+youtube_saturation_tbl %>% glimpse()
 
 # ** TV GRP Decay Data ----
-tv_grp_decay_tbl <- bind_cols(
-    bind_cols(map(dr_alpha_values, ~ get_decay(media_adstock_tbl, "tv_grp_adstock_0.5", .x))),
-    bind_cols(map(dr_alpha_values, ~ get_decay(media_adstock_tbl, "tv_grp_adstock_0.7", .x))),
-    bind_cols(map(dr_alpha_values, ~ get_decay(media_adstock_tbl, "tv_grp_adstock_0.9", .x)))
+tv_grp_saturation_tbl <- bind_cols(
+    bind_cols(map(alpha_values, ~ get_saturation(media_adstock_tbl, "tv_grp_ad_0.5", .x))),
+    bind_cols(map(alpha_values, ~ get_saturation(media_adstock_tbl, "tv_grp_ad_0.7", .x))),
+    bind_cols(map(alpha_values, ~ get_saturation(media_adstock_tbl, "tv_grp_ad_0.9", .x)))
 )
 
-tv_grp_decay_tbl %>% View()
+#tv_grp_saturation_tbl %>% View()
 
 # ** Meta Decay Data ----
-meta_decay_tbl <- bind_cols(
-    bind_cols(map(dr_alpha_values, ~ get_decay(media_adstock_tbl, "meta_imp_adstock_0.5", .x))),
-    bind_cols(map(dr_alpha_values, ~ get_decay(media_adstock_tbl, "meta_imp_adstock_0.7", .x))),
-    bind_cols(map(dr_alpha_values, ~ get_decay(media_adstock_tbl, "meta_imp_adstock_0.9", .x)))
+meta_saturation_tbl <- bind_cols(
+    bind_cols(map(alpha_values, ~ get_saturation(media_adstock_tbl, "meta_imp_ad_0.5", .x))),
+    bind_cols(map(alpha_values, ~ get_saturation(media_adstock_tbl, "meta_imp_ad_0.7", .x))),
+    bind_cols(map(alpha_values, ~ get_saturation(media_adstock_tbl, "meta_imp_ad_0.9", .x)))
 )
 
-meta_decay_tbl %>% View()
+# meta_decay_tbl %>% View()
 
 # ** Influencers Decay Data ----
-influencers_decay_tbl <- bind_cols(
-    bind_cols(map(dr_alpha_values, ~ get_decay(media_adstock_tbl, "influencers_views_adstock_0.5", .x))),
-    bind_cols(map(dr_alpha_values, ~ get_decay(media_adstock_tbl, "influencers_views_adstock_0.7", .x))),
-    bind_cols(map(dr_alpha_values, ~ get_decay(media_adstock_tbl, "influencers_views_adstock_0.9", .x)))
+influencers_saturation_tbl <- bind_cols(
+    bind_cols(map(alpha_values, ~ get_saturation(media_adstock_tbl, "influencers_views_ad_0.5", .x))),
+    bind_cols(map(alpha_values, ~ get_saturation(media_adstock_tbl, "influencers_views_ad_0.7", .x))),
+    bind_cols(map(alpha_values, ~ get_saturation(media_adstock_tbl, "influencers_views_ad_0.9", .x)))
 )
 
-influencers_decay_tbl %>% View()
+# influencers_decay_tbl %>% View()
 
 # ** Final Decay Data ----
-final_features_tbl <- bind_cols(
-    data_tbl,
-    media_adstock_tbl %>% select(-c(date, tv_grp, you_tube_imp, meta_imp, influencers_views)),
-    tv_grp_decay_tbl,
-    youtube_decay_tbl,
-    meta_decay_tbl,
-    influencers_decay_tbl
+transformed_tbl <- bind_cols(
+    data_tbl %>% select(-c(meta_imp, you_tube_imp, influencers_views, tv_grp)),
+    youtube_saturation_tbl,
+    tv_grp_saturation_tbl,
+    meta_saturation_tbl,
+    influencers_saturation_tbl
 )
 
-final_features_tbl %>% glimpse()
+transformed_tbl %>% glimpse()
+
+# transformed_tbl %>% View()
+
+
+# * Visualization (Response Curves) ----
+# youtube_saturation_tbl %>% 
+#     select(you_tube_imp_ad_0.9_dr_0.3, you_tube_imp_ad_0.9_dr_0.4, you_tube_imp_ad_0.9_dr_0.5) %>% 
+#     bind_cols(media_adstock_tbl %>% select(you_tube_imp_ad_0.9)) %>% 
+#     
+#     ggplot(aes(x = you_tube_imp_ad_0.9))+
+#     geom_point(aes(y = you_tube_imp_ad_0.9_dr_0.3, color = "Adstock/DR (90%/30%)"), alpha = 0.5)+
+#     geom_point(aes(y = you_tube_imp_ad_0.9_dr_0.4, color = "Adstock/DR (90%/40%)"), alpha = 0.5)+
+#     geom_point(aes(y = you_tube_imp_ad_0.9_dr_0.5, color = "Adstock/DR (90%/50%)"), alpha = 0.5)+
+#     scale_color_manual(
+#         values = c("blue", "red", "orange"),
+#         labels = c("Adstock/DR (90%/30%)", "Adstock/DR (90%/40%)", "Adstock/DR (90%/50%)"),
+#         name = ""
+#     )+
+#     theme(legend.position = "bottom")
 
 
 # *****************************************************************************
@@ -346,12 +367,30 @@ get_correlation <- function(data, target) {
     return(ret)
 }
 
-get_correlation(data = data_tbl, target = "accounts_subscriptions")
+corr_transformed_tbl <- get_correlation(
+    data   = transformed_tbl, 
+    target = "accounts_subscriptions"
+)
 
-get_correlation(data = final_features_tbl, target = "accounts_subscriptions")
+corr_transformed_tbl %>% 
+    filter(str_detect(feature, "you_tube"))
 
 
 
+
+
+# * Regression ----
+lm_fit <- lm(
+    formula = accounts_subscriptions ~ .,
+    data    = transformed_tbl %>% select(-date)
+)
+
+# * Regression Output ----
+lm_summary <- broom::tidy(lm_fit) %>% 
+    mutate(stat_sig = ifelse(p.value < 0.05, "yes", "no")) %>% 
+    View()
+
+lm_params <- broom::glance(lm_fit)
 
 
 # *****************************************************************************
