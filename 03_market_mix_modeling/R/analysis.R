@@ -313,7 +313,7 @@ influencers_saturation_tbl <- bind_cols(
 
 # influencers_decay_tbl %>% View()
 
-# ** Final Decay Data ----
+# ** Final Transformed Data ----
 transformed_tbl <- bind_cols(
     data_tbl %>% select(-c(meta_imp, you_tube_imp, influencers_views, tv_grp)),
     youtube_saturation_tbl,
@@ -352,7 +352,6 @@ transformed_tbl %>% glimpse()
 get_correlation <- function(data, target) {
     
     df <- data %>% 
-        select(-date) %>% 
         cor() %>% 
         round(digits = 2) 
     
@@ -367,13 +366,11 @@ get_correlation <- function(data, target) {
     return(ret)
 }
 
-corr_transformed_tbl <- get_correlation(
-    data   = transformed_tbl, 
+get_correlation(
+    data   = transformed_tbl %>% select(accounts_subscriptions, starts_with("influencers")), 
     target = "accounts_subscriptions"
 )
 
-corr_transformed_tbl %>% 
-    filter(str_detect(feature, "you_tube"))
 
 
 
