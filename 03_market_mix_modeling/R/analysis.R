@@ -1,5 +1,5 @@
-# SCRIPT TOPIC:
-# SCRIPT NOTES:
+# MARKET MIX MODELING ----
+# MANUAL ANALYSIS SCRIPT ----
 # *** ----
 
 # *****************************************************************************
@@ -19,17 +19,17 @@ library(tidyverse)
 # *****************************************************************************
 # DATA IMPORT ----
 # *****************************************************************************
-data_tbl <- read_xlsx("../data/Project_Data.xlsx") %>% 
+mmm_tbl <- read_xlsx("../data/Project_Data.xlsx") %>% 
     as_tibble() %>% 
     clean_names() %>% 
     mutate(date = as.Date(date)) %>% 
     setNames(names(.) %>% str_replace_all("impressions", "imp"))
 
-data_tbl %>% glimpse()
+mmm_tbl %>% glimpse()
 
-data_tbl %>% View()
+mmm_tbl %>% View()
 
-data_tbl %>% sapply(function(x) sum(is.na(x)))
+mmm_tbl %>% sapply(function(x) sum(is.na(x)))
 
 
 # *****************************************************************************
@@ -37,7 +37,7 @@ data_tbl %>% sapply(function(x) sum(is.na(x)))
 # *****************************************************************************
 
 # * Correlation Analysis ----
-corr_tbl <- data_tbl %>% 
+corr_tbl <- mmm_tbl %>% 
     select(-date) %>% 
     cor() %>% 
     round(digits = 2) 
@@ -55,11 +55,6 @@ corr_tbl %>%
     )
 
 corr_subscriptions <- corr_tbl[, "accounts_subscriptions"]
-
-
-tibble(feature = names(corr_subscriptions), correlation = corr_subscriptions) %>% 
-    filter(feature != "accounts_subscriptions") %>% 
-    arrange(desc(correlation))
 
 
 # * Account Sub vs TV GRP ----
@@ -84,33 +79,15 @@ get_line_plot <- function(data, var) {
     return(p)
 }
 
-get_scatter_plot <- function(data, var) {
-    p <- data %>% 
-        ggplot(aes(accounts_subscriptions, rlang::sym(var)))+
-        geom_point(size = 1.5)+
-        geom_smooth(method = loess, se = FALSE)
-    
-    return(p)
-}
-
-data_tbl %>% 
-    ggplot(aes(accounts_subscriptions, tv_grp))+
-    geom_point(size = 1.5)+
-    geom_smooth(method = loess, se = FALSE)
-    
-    
-
-get_line_plot(data_tbl, var = "tv_grp")
-
-get_line_plot(data_tbl, var = "meta_impressions")
+get_line_plot(mmm_tbl, var = "tv_grp")
 
 
-# Dual Axis Line Plot ----
-p1 <- data_tbl %>% 
-    mutate(meta_impressions = meta_impressions/1000) %>% 
+# * Dual Axis Plot ----
+mmm_tbl %>% 
+    mutate(meta_imp = meta_imp/1000) %>% 
     ggplot(aes(x = date))+
     geom_line(aes(y = accounts_subscriptions, color = "Subscriptions"), linewidth = 1)+
-    geom_line(aes(y = meta_impressions, color = "Meta Impressions"), linewidth = 1) +
+    geom_line(aes(y = meta_imp, color = "Meta Impressions"), linewidth = 1) +
     scale_color_manual(
         values = c("blue", "red"),
         labels = c("Subscriptions", "Meta Impressions"),
@@ -132,27 +109,17 @@ p1 <- data_tbl %>%
     )
 
 
-get_line_plot(data_tbl, var = "dates_school_holidays")
-
-p2 <- data_tbl %>% 
-    ggplot(aes(accounts_subscriptions, meta_impressions))+
-    geom_point(size = 1.5)+
-    geom_smooth(method = loess)
-
-gt <- arrangeGrob(p1, p2)
-
-p1/p2
-
+get_line_plot(mmm_tbl, var = "dates_school_holidays")
 
 
 # *****************************************************************************
-# REGRESSION (RAW DATA) ----
+# REGRESSION 1: RAW DATA ----
 # *****************************************************************************
 
 # * Regression ----
 lm_fit <- lm(
     formula = accounts_subscriptions ~ .,
-    data    = data_tbl %>% select(-date)
+    data    = mmm_tbl %>% select(-date)
 )
 
 # * Regression Output ----
@@ -169,7 +136,7 @@ lm_params <- broom::glance(lm_fit)
 # - Adstock (carry over effect of media advertising on the consumer)
 
 # * Functions ----
-get_adstock <- function(data, var, lambda) {
+get_adstock <- function(data, var, lambda, default_name = TRUE) {
     
     adstock <- numeric(nrow(data))
     
@@ -181,9 +148,16 @@ get_adstock <- function(data, var, lambda) {
         }
     }
     
-    ret <- adstock %>% 
-        as_tibble() %>% 
-        `colnames<-`(c(paste0({{var}}, "_ad_", lambda)))
+    if (!default_name) {
+        ret <- adstock %>% 
+            as_tibble() %>% 
+            `colnames<-`(c(paste0({{var}}, "_ad_", lambda)))
+    } else {
+        ret <- adstock %>% 
+            as_tibble() %>% 
+            `colnames<-`(c(paste0({{var}}, "_trans")))
+    }
+    
     
     return(ret)
 }
@@ -207,7 +181,7 @@ get_adstock_plot <- function(data, var, legend_position = "bottom",
     
     p <- p+
         geom_area(position = "identity", alpha = alpha, color = "grey30", linewidth = 0.3)+
-        scale_fill_brewer(palette = "BuPu", name = "", direction = -1)+
+        scale_fill_brewer(palette = "Blues", name = "", direction = -1)+
         scale_x_date(date_breaks = "4 months")+
         theme_bw()+
         theme(
@@ -225,7 +199,7 @@ get_adstock_plot <- function(data, var, legend_position = "bottom",
 # * Data Transformation ----
 
 # ** Media Tibble ----
-media_tbl <- data_tbl %>% 
+media_tbl <- mmm_tbl %>% 
     select(date, tv_grp, you_tube_imp, meta_imp, influencers_views)
 
 # ** Lambda Values ----
@@ -242,7 +216,7 @@ media_adstock_tbl <- bind_cols(
 
 # media_adstock_tbl %>% View()
 media_adstock_tbl %>% glimpse()
-    
+
 
 # * Visualization ----
 get_adstock_plot(media_adstock_tbl, "tv_grp")
@@ -313,9 +287,13 @@ influencers_saturation_tbl <- bind_cols(
 
 # influencers_decay_tbl %>% View()
 
-# ** Final Transformed Data ----
+# * Final Transformed Data ----
+
+# - Take features from the raw dataset (excluding media features)
+# - Combine with transformed features (adstock and diminishing returns)
+
 transformed_tbl <- bind_cols(
-    data_tbl %>% select(-c(meta_imp, you_tube_imp, influencers_views, tv_grp)),
+    mmm_tbl %>% select(-c(meta_imp, you_tube_imp, influencers_views, tv_grp)),
     youtube_saturation_tbl,
     tv_grp_saturation_tbl,
     meta_saturation_tbl,
@@ -348,7 +326,7 @@ transformed_tbl %>% glimpse()
 # CORRELATION ANALYSIS (TRANSFORMED FEATURES) ----
 # *****************************************************************************
 
-# * Correlation Analysis ----
+# * Function ----
 get_correlation <- function(data, target) {
     
     df <- data %>% 
@@ -366,28 +344,184 @@ get_correlation <- function(data, target) {
     return(ret)
 }
 
+# * Correlation Analysis ----
+
 get_correlation(
     data   = transformed_tbl %>% select(accounts_subscriptions, starts_with("influencers")), 
     target = "accounts_subscriptions"
 )
 
 
+# *****************************************************************************
+# REGRESSION 2: TRANSFORMED DATA ----
+# *****************************************************************************
+
+# * Function ----
+get_linear_reg <- function(data, output = "summary") {
+    
+    # lm fit
+    lm_fit <- lm(
+        formula = accounts_subscriptions ~ .,
+        data    = data 
+    )
+    
+    # lm tidy
+    lm_tidy <- broom::tidy(lm_fit) %>% 
+        mutate(stat_sig = ifelse(p.value < 0.05, "yes", "no"))
+    
+    # metrics
+    lm_params <- broom::glance(lm_fit)
+    
+    # predictions
+    pred_tbl <- mmm_tbl %>% 
+        select(accounts_subscriptions) %>% 
+        bind_cols(
+            predict(lin_reg, new_data = mmm_tbl %>% select(accounts_subscriptions)) %>% 
+                as_tibble() %>% 
+                `colnames<-`(".pred")
+        )
+    
+    # final metrics
+    lm_params <- pred_tbl %>% 
+        metrics(truth = accounts_subscriptions, estimate = .pred) %>% 
+        select(-.estimator) %>% 
+        pivot_wider(names_from = .metric, values_from = .estimate) %>% 
+        bind_cols(lm_params)
+    
+    # output selection
+    if (output == "summary") {
+        ret <-  lm_tidy
+    } else if (output == "params") {
+        ret <- lm_params
+    } 
+    
+    # return
+    return(ret)
+}
+
+# * Regression ----
+
+get_linear_reg(data = transformed_tbl %>% select(-date))
+
+get_linear_reg(data = transformed_tbl %>% select(-date), output = "params")
 
 
+# * Stat Sig Features Only ----
+stat_sig_feature_list <- get_linear_reg(data = transformed_tbl %>% select(-date)) %>% 
+    filter(stat_sig == "yes") %>% 
+    pull(term)
+
+get_linear_reg(
+    data = transformed_tbl %>% 
+        select(
+            accounts_subscriptions,
+            matches(paste(stat_sig_feature_list, collapse = "|"))
+        )
+) %>% View()
+
+get_linear_reg(
+    data = transformed_tbl %>% 
+        select(
+            accounts_subscriptions,
+            matches(paste(stat_sig_feature_list, collapse = "|"))
+        ),
+    output = "params"
+) 
+
+
+# *****************************************************************************
+# **** ----
+# OPTIMIZATION ----
+# *****************************************************************************
+
+# - This section uses a for loop to find the best lambda and alpha values
+# - Best = best values that maximize the r-squared
+
+# * Lambda Values List ----
+lambda_values <- seq(0.1, 0.9, by = 0.1)
+
+# * Alpha Values List ----
+alpha_values  <- seq(0.1, 0.9, by = 0.1)
+
+# * Create Empty Results Tibble ----
+results_tbl <- tibble(lambda = numeric(), alpha = numeric(), rsquared = numeric())
+
+# * Regression ----
+# - Iterate Over Lambda & Alpha Values
+
+for (i in lambda_values) {
+    for (j in alpha_values) {
+        
+        # Data transformation
+        trans_tbl <- mmm_tbl %>% 
+            bind_cols(
+                get_adstock(data = mmm_tbl, var = "tv_grp", lambda = i, TRUE),
+                get_adstock(data = mmm_tbl, var = "you_tube_imp", lambda = i, TRUE),    
+                get_adstock(data = mmm_tbl, var = "meta_imp", lambda = i, TRUE),    
+                get_adstock(data = mmm_tbl, var = "influencers_views", lambda = i, TRUE),  
+                get_adstock(data = mmm_tbl, var = "google_display_imp", lambda = i, TRUE),      
+                get_adstock(data = mmm_tbl, var = "google_generic_paid_search_imp", lambda = i, TRUE)    
+            ) %>% 
+            select(-c(tv_grp, you_tube_imp, meta_imp, influencers_views,
+                      google_display_imp, google_generic_paid_search_imp)) %>%
+            mutate(tv_grp_trans = tv_grp_trans ^ j) %>% 
+            mutate(you_tube_imp_trans = you_tube_imp_trans ^ j) %>% 
+            mutate(meta_imp_trans = meta_imp_trans ^ j) %>% 
+            mutate(influencers_views_trans = influencers_views_trans ^ j) %>% 
+            mutate(google_display_imp_trans = google_display_imp_trans ^ j) %>% 
+            mutate(google_generic_paid_search_imp_trans = google_generic_paid_search_imp_trans ^ j) 
+        
+        lm_fit   <- lm(accounts_subscriptions ~ ., data = trans_tbl %>% select(-date))
+        rsquared <- summary(lm_fit)$r.squared
+        
+        # Append the lambda and R-squared values to the results tibble
+        results_tbl <- results_tbl %>%
+            add_row(lambda = i, alpha = j, rsquared = rsquared) %>% 
+            arrange(desc(rsquared))
+        
+    }
+}
+
+# Top 10 R - Squared Values ----
+results_tbl %>% head(5)
+
+
+# *****************************************************************************
+# **** ----
+# REGRESSION: OPTIMIZED ALPHA & LAMBDA VALUES ----
+# *****************************************************************************
+
+# * Data Prep ----
+best_lambda <- pull(results_tbl[1,][1])
+best_alpha  <- pull(results_tbl[1,][2])
+
+mmm_final_tbl <- mmm_tbl %>% 
+    bind_cols(
+        get_adstock(data = mmm_tbl, var = "tv_grp", lambda = best_lambda, TRUE),
+        get_adstock(data = mmm_tbl, var = "you_tube_imp", lambda = best_lambda, TRUE),    
+        get_adstock(data = mmm_tbl, var = "meta_imp", lambda = best_lambda, TRUE),    
+        get_adstock(data = mmm_tbl, var = "influencers_views", lambda = best_lambda, TRUE),  
+        get_adstock(data = mmm_tbl, var = "google_display_imp", lambda = best_lambda, TRUE),      
+        get_adstock(data = mmm_tbl, var = "google_generic_paid_search_imp", lambda = best_lambda, TRUE)    
+    ) %>% 
+    select(-c(tv_grp, you_tube_imp, meta_imp, influencers_views,
+              google_display_imp, google_generic_paid_search_imp)) %>%
+    mutate(tv_grp_trans = tv_grp_trans ^ best_alpha) %>% 
+    mutate(you_tube_imp_trans = you_tube_imp_trans ^ best_alpha) %>% 
+    mutate(meta_imp_trans = meta_imp_trans ^ best_alpha) %>% 
+    mutate(influencers_views_trans = influencers_views_trans ^ best_alpha) %>% 
+    mutate(google_display_imp_trans = google_display_imp_trans ^ best_alpha) %>% 
+    mutate(google_generic_paid_search_imp_trans = google_generic_paid_search_imp_trans ^ best_alpha)
 
 
 # * Regression ----
-lm_fit <- lm(
-    formula = accounts_subscriptions ~ .,
-    data    = transformed_tbl %>% select(-date)
-)
+lm_fit_final <- lm(accounts_subscriptions ~., data = mmm_final_tbl %>% select(-date))
 
-# * Regression Output ----
-lm_summary <- broom::tidy(lm_fit) %>% 
-    mutate(stat_sig = ifelse(p.value < 0.05, "yes", "no")) %>% 
-    View()
+lm_fit_final_tbl <- broom::tidy(lm_fit_final) %>% 
+    mutate(stat_sig = ifelse(p.value < 0.05, "yes", "no"))
 
-lm_params <- broom::glance(lm_fit)
+lm_fit_params_tbl <- broom::glance(lm_fit_final)
+
 
 
 # *****************************************************************************
