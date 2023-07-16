@@ -517,18 +517,55 @@ mmm_final_tbl <- mmm_tbl %>%
 # * Regression ----
 lm_fit_final <- lm(accounts_subscriptions ~., data = mmm_final_tbl %>% select(-date))
 
-lm_fit_final_tbl <- broom::tidy(lm_fit_final) %>% 
+lm_fit_final_coef_tbl <- broom::tidy(lm_fit_final) %>% 
     mutate(stat_sig = ifelse(p.value < 0.05, "yes", "no"))
 
-lm_fit_params_tbl <- broom::glance(lm_fit_final)
-
+lm_fit_final_params_tbl <- broom::glance(lm_fit_final)
 
 
 # *****************************************************************************
-# SECTION NAME ----
+# **** ----
+# CONTRIBUTION ----
+# *****************************************************************************
+
+# * Data Prep ----
+
+# subscription value
+subscription_value <- 35
+
+# model coefficients
+roi_tbl <- lm_fit_final_coef_tbl %>% 
+    select(term, estimate) %>% 
+    filter(!grepl("\\(Intercept\\)|promotion|competitors_promotion|dates_school_holidays", term)) %>% 
+    
+    # join sum of predictors
+    left_join(
+        mmm_final_tbl %>% 
+            select(-date) %>% 
+            gather() %>% 
+            group_by(key) %>% 
+            summarise(contribution = sum(value)) %>% 
+            ungroup(),
+        by = c("term" = "key")
+    ) %>% 
+    
+    # calculate revenue
+    mutate(revenue = contribution * estimate) %>% 
+    
+    # spend
+    mutate(spend = contribution * subscription_value) %>% 
+    
+    # ROI
+    mutate(roi = revenue / spend)
+
+roi_tbl
+
+
+# *****************************************************************************
+# SECTION NAME 
 # *****************************************************************************
 # *****************************************************************************
-# SECTION NAME ----
+# SECTION NAME 
 # *****************************************************************************
 
 
