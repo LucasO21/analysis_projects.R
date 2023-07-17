@@ -199,6 +199,14 @@ get_adstock_plot <- function(data, var, legend_position = "bottom",
 # * Data Transformation ----
 
 # ** Media Tibble ----
+bind_cols(
+    mmm_tbl %>% 
+        get_adstock("you_tube_imp", 0.9)
+    get_adstock("tv_grp", 0.5) %>% 
+        get_adstock()
+)
+
+
 media_tbl <- mmm_tbl %>% 
     select(date, tv_grp, you_tube_imp, meta_imp, influencers_views)
 
@@ -438,49 +446,74 @@ get_linear_reg(
 # - Best = best values that maximize the r-squared
 
 # * Lambda Values List ----
-lambda_values <- seq(0.1, 0.9, by = 0.1)
+lambda_values <- seq(0.1, 0.3, by = 0.1)
 
 # * Alpha Values List ----
-alpha_values  <- seq(0.1, 0.9, by = 0.1)
+alpha_values  <- seq(0.1, 0.3, by = 0.1)
 
 # * Create Empty Results Tibble ----
-results_tbl <- tibble(lambda = numeric(), alpha = numeric(), rsquared = numeric())
+results_tbl <- tibble(
+    column   = character(), 
+    lambda   = numeric(), 
+    alpha    = numeric(), 
+    rsquared = numeric()
+)
+
+columns <- c("tv_grp", "you_tube_imp", "meta_imp")
 
 # * Regression ----
 # - Iterate Over Lambda & Alpha Values
 
-for (i in lambda_values) {
-    for (j in alpha_values) {
-        
-        # Data transformation
-        trans_tbl <- mmm_tbl %>% 
-            bind_cols(
-                get_adstock(data = mmm_tbl, var = "tv_grp", lambda = i, TRUE),
-                get_adstock(data = mmm_tbl, var = "you_tube_imp", lambda = i, TRUE),    
-                get_adstock(data = mmm_tbl, var = "meta_imp", lambda = i, TRUE),    
-                get_adstock(data = mmm_tbl, var = "influencers_views", lambda = i, TRUE),  
-                get_adstock(data = mmm_tbl, var = "google_display_imp", lambda = i, TRUE),      
-                get_adstock(data = mmm_tbl, var = "google_generic_paid_search_imp", lambda = i, TRUE)    
-            ) %>% 
-            select(-c(tv_grp, you_tube_imp, meta_imp, influencers_views,
-                      google_display_imp, google_generic_paid_search_imp)) %>%
-            mutate(tv_grp_trans = tv_grp_trans ^ j) %>% 
-            mutate(you_tube_imp_trans = you_tube_imp_trans ^ j) %>% 
-            mutate(meta_imp_trans = meta_imp_trans ^ j) %>% 
-            mutate(influencers_views_trans = influencers_views_trans ^ j) %>% 
-            mutate(google_display_imp_trans = google_display_imp_trans ^ j) %>% 
-            mutate(google_generic_paid_search_imp_trans = google_generic_paid_search_imp_trans ^ j) 
-        
-        lm_fit   <- lm(accounts_subscriptions ~ ., data = trans_tbl %>% select(-date))
-        rsquared <- summary(lm_fit)$r.squared
-        
-        # Append the lambda and R-squared values to the results tibble
-        results_tbl <- results_tbl %>%
-            add_row(lambda = i, alpha = j, rsquared = rsquared) %>% 
-            arrange(desc(rsquared))
-        
+for (col in columns) {
+    for (i in lambda_values) {
+        for (j in alpha_values) {
+            
+            # # Data transformation
+            # trans_tbl <- mmm_tbl %>% 
+            #     bind_cols(
+            #         get_adstock(data = mmm_tbl, var = "tv_grp", lambda = i, TRUE),
+            #         get_adstock(data = mmm_tbl, var = "you_tube_imp", lambda = i, TRUE),    
+            #         get_adstock(data = mmm_tbl, var = "meta_imp", lambda = i, TRUE)  
+            #         # get_adstock(data = mmm_tbl, var = "influencers_views", lambda = i, TRUE),  
+            #         # get_adstock(data = mmm_tbl, var = "google_display_imp", lambda = i, TRUE),      
+            #         # get_adstock(data = mmm_tbl, var = "google_generic_paid_search_imp", lambda = i, TRUE)    
+            #     ) %>% 
+            #     select(-c(tv_grp, you_tube_imp, meta_imp)) %>%
+            #     mutate(tv_grp_trans = tv_grp_trans ^ j) %>% 
+            #     mutate(you_tube_imp_trans = you_tube_imp_trans ^ j) %>% 
+            #     mutate(meta_imp_trans = meta_imp_trans ^ j) 
+            # mutate(influencers_views_trans = influencers_views_trans ^ j) %>% 
+            # mutate(google_display_imp_trans = google_display_imp_trans ^ j) %>% 
+            # mutate(google_generic_paid_search_imp_trans = google_generic_paid_search_imp_trans ^ j) 
+            
+            trans_tbl <- mmm_tbl %>% 
+                bind_cols(
+                    get_adstock(data = mmm_tbl, var = {{col}}, lambda = i, TRUE)
+                ) %>% 
+                select(-{{col}}) %>% 
+                mutate(across(ends_with("_trans"), ~ . ^ j))
+            
+            lm_fit   <- lm(accounts_subscriptions ~ ., data = trans_tbl %>% select(-date))
+            rsquared <- summary(lm_fit)$r.squared
+            
+            # Append the lambda and R-squared values to the results tibble
+            results_tbl <- results_tbl %>%
+                add_row(column = col, lambda = i, alpha = j, rsquared = rsquared) %>% 
+                arrange(desc(rsquared))
+            
+        }
     }
+    
+    
 }
+
+
+lapply(lambda_values, function(x) get_adstock(data = mmm_tbl, var = "tv_grp", lambda = x) ^ j) %>% 
+    bind_rows() %>% 
+    as_tibble()
+  
+
+
 
 # Top 10 R - Squared Values ----
 results_tbl %>% head(5)
@@ -560,6 +593,26 @@ roi_tbl <- lm_fit_final_coef_tbl %>%
 
 roi_tbl
 
+
+# *****************************************************************************
+# REPREX ----
+# *****************************************************************************
+
+library(tidyverse)
+
+lamda_values <- c(0.2, 0.3, 0.4)
+alpha_values <- c(0.3, 0.5, 0.9)
+
+set.seed(123)
+data <- tibble(
+    sales = runif(5, min = 1000, max = 1500),
+    var_1 = runif(5, min = 12, max = 25),
+    var_2 = runif(5, min = 75, max = 90),
+)
+
+tibble(
+    var_1
+)
 
 # *****************************************************************************
 # SECTION NAME 
