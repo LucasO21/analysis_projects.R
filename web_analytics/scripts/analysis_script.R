@@ -22,16 +22,32 @@ library(timetk)
 # *****************************************************************************
 
 # * Data Import ----
-ppc_tbl <- readxl::read_excel(
+colnames <- c("date", "campaign", "impressions", "clicks", "cost", "ctr", 
+              "conversions", "cvr")
+
+adwords_tbl <- readxl::read_excel(
     path  = "../data/Marketing+Analytics+Case+Study.xlsm",
     sheet = "PPC Data",
     skip  = 3
 ) %>% 
-    as_tibble %>% 
     clean_names() %>% 
+    select(date, starts_with("ad_words")) %>% 
+    `colnames<-`(colnames)
+
+facebook_tbl <- readxl::read_excel(
+    path  = "../data/Marketing+Analytics+Case+Study.xlsm",
+    sheet = "PPC Data",
+    skip  = 3
+) %>% 
+    clean_names() %>% 
+    select(date, starts_with("facebook")) %>% 
+    `colnames<-`(colnames)
+    
+    
+campaign_tbl <- bind_rows(adwords_tbl, facebook_tbl) %>% 
     mutate(date = ymd(date))
 
-ppc_tbl %>% glimpse()
+campaign_tbl %>% glimpse()
 
 
 # * Key Question ----
