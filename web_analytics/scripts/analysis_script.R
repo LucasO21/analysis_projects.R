@@ -42,7 +42,8 @@ ppc_tbl %>% glimpse()
 #' - 4. Based on this information, is one PPC ad type better than the other?
 
 
-# * Total CTR, CVR CVR % ----
+# * PPC Analysis Total ----
+
 # ** Cost Table ----
 cost_tbl <- ppc_tbl %>% 
     select(ends_with("cost")) %>% 
@@ -101,6 +102,70 @@ cost_tbl %>% left_join(impressions_tbl) %>%
 #' Questions:
 #' - 1. Why was facebook more successful at getting clicks than ad words?
 #' - 2. Was the extra money spent on facebook worth it?
+
+
+# * PPC Analysis by Campaign ----
+
+# ** Function ----
+get_ad_metrics <- function(data, campaign, metric) {
+    
+    # campaign setup
+    if (campaign == "ad_words")  campaign_name = "ad_words_campaign_id"
+    if (campaign == "facebook")  campaign_name = "facebook_campaign_id"
+    
+    # group_cols setup
+    # if (campaign == "ad_words")  group_cols = c("ad_words_campaign_id")
+    # if (campaign == "facebook")  group_cols = c("facebook_campaign_id")
+    
+    # rlang setup
+    campaign_name <- rlang::sym(campaign_name)
+    #group_cols    <- rlang::enquo(group_cols)
+    
+    # calculation
+    ret_tbl <- data %>% 
+        select(!!campaign_name, matches(paste0("^", campaign, ".*", metric, "$"))) %>% 
+        #rowwise() %>%
+        #mutate(total = sum(c_across(ends_with(metric)))) %>% 
+        #pivot_longer(cols = -!!campaign_name, names_to = "name", values_to = "value") %>% 
+        #summarise(!!paste0("total_", metric):= sum(value), .by = !!group_cols) %>% 
+        #mutate(name = name %>% str_remove_all(paste0("_", metric))) %>% 
+        group_by(!!campaign_name) %>% 
+        summarise(!!paste0("total_", metric):= sum(c_across(where(is.numeric)))) %>% 
+        ungroup()
+    
+    return(ret_tbl)
+}
+
+
+get_ad_metrics_by_ad <- function(campaign) {
+    
+    if (campaign == "adwords") campaign = "ad_words"
+    
+    cost_tbl   <- get_ad_metrics(ppc_tbl, campaign = campaign, "cost")
+    impr_tbl   <- get_ad_metrics(ppc_tbl, campaign = campaign, "impressions")
+    clicks_tbl <- get_ad_metrics(ppc_tbl, campaign = campaign, "clicks")
+    leads_tbl  <- get_ad_metrics(ppc_tbl, campaign = campaign, "conversions")
+    
+    metrics_tbl <- cost_tbl %>% 
+        left_join(impr_tbl) %>% 
+        left_join(clicks_tbl) %>% 
+        left_join(leads_tbl) %>%
+        mutate(
+            ctr = total_clicks / total_impressions,
+            cpc = total_cost / total_clicks,
+            cvr = total_conversions / total_clicks
+        )
+    
+    return(metrics_tbl)
+}
+
+
+# ** Stats by Ad ----
+aw_metrics_by_ad_tbl <- get_ad_metrics_by_ad("ad_words")
+
+fb_metrics_by_ad_tbl <- get_ad_metrics_by_ad("facebook")
+
+
 
 
 
