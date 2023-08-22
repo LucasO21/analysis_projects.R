@@ -1,5 +1,4 @@
-# SCRIPT TOPIC:
-# SCRIPT NOTES:
+# PPC ANALYSIS SCRIPT:
 # *** ----
 
 # *****************************************************************************
@@ -22,30 +21,45 @@ library(timetk)
 # *****************************************************************************
 
 # * Data Import ----
-colnames <- c("date", "campaign", "impressions", "clicks", "cost", "ctr", 
-              "conversions", "cvr")
 
-adwords_tbl <- readxl::read_excel(
-    path  = "../data/Marketing+Analytics+Case+Study.xlsm",
-    sheet = "PPC Data",
-    skip  = 3
-) %>% 
-    clean_names() %>% 
-    select(date, starts_with("ad_words")) %>% 
-    `colnames<-`(colnames)
+# ** Function ----
+get_campaign_data <- function() {
+    
+    # column names
+    colnames <- c("date", "campaign_id", "impressions", "clicks", "cost", "ctr", 
+                  "conversions", "cvr")
+    
+    # ad words tbl
+    adwords_tbl <- readxl::read_excel(
+        path  = "../data/Marketing+Analytics+Case+Study.xlsm",
+        sheet = "PPC Data",
+        skip  = 3
+    ) %>% 
+        clean_names() %>% 
+        select(date, starts_with("ad_words")) %>% 
+        `colnames<-`(colnames) %>% 
+        mutate(campaign = "Ad Words")
+    
+    # facebook tbl
+    facebook_tbl <- readxl::read_excel(
+        path  = "../data/Marketing+Analytics+Case+Study.xlsm",
+        sheet = "PPC Data",
+        skip  = 3
+    ) %>% 
+        clean_names() %>% 
+        select(date, starts_with("facebook")) %>% 
+        `colnames<-`(colnames) %>% 
+        mutate(campaign = "Facebook")
+    
+    # combined tbl
+    combined_tbl <- bind_rows(adwords_tbl, facebook_tbl) %>% 
+        mutate(date = ymd(date))
+    
+    return(combined_tbl)
+    
+}
 
-facebook_tbl <- readxl::read_excel(
-    path  = "../data/Marketing+Analytics+Case+Study.xlsm",
-    sheet = "PPC Data",
-    skip  = 3
-) %>% 
-    clean_names() %>% 
-    select(date, starts_with("facebook")) %>% 
-    `colnames<-`(colnames)
-    
-    
-campaign_tbl <- bind_rows(adwords_tbl, facebook_tbl) %>% 
-    mutate(date = ymd(date))
+campaign_tbl <- get_campaign_data()
 
 campaign_tbl %>% glimpse()
 
@@ -58,53 +72,79 @@ campaign_tbl %>% glimpse()
 #' - 4. Based on this information, is one PPC ad type better than the other?
 
 
-# * PPC Analysis Total ----
+# * Metrics by Ad Campaign ----
 
-# ** Cost Table ----
-cost_tbl <- ppc_tbl %>% 
-    select(ends_with("cost")) %>% 
-    rowwise() %>%
-    mutate(total = sum(c_across(everything()))) %>% 
-    gather() %>% 
-    summarise(total_cost = sum(value), .by = key) %>% 
-    mutate(key = key %>% str_remove_all("_cost"))
+# ** Function ----
 
-# ** Impressions Table ----
-impressions_tbl <- ppc_tbl %>% 
-    select(ends_with("impressions")) %>% 
-    rowwise() %>%
-    mutate(total = sum(c_across(everything()))) %>% 
-    gather() %>% 
-    summarise(total_impressions = sum(value), .by = key) %>% 
-    mutate(key = key %>% str_remove_all("_impressions"))
+# - Aggregates
+get_aggregate_metrics <- function(data, metric = "cost", level = "campaign", campaign = NULL) {
+    
+    # rlang setup
+    metric <- rlang::sym(metric)
+    level  <- rlang::sym(level)
+    
+    # filtering setup
+    if (is.null(campaign)) {
+        campaign_name = campaign
+    } else if (campaign == "Ad Words") {
+        campaign_name = "Ad Words"
+    } else {
+        campaign_name = "Facebook"
+    }
+    
+    # data prep
+    if (is.null(campaign)) {
+        data <- data
+    } else {
+        data <- data %>% filter(campaign == campaign_name)
+    }
+    ret <- data %>% 
+        select(!!level, !!metric) %>% 
+        mutate(total = "Total") %>% 
+        pivot_longer(cols = -!!metric, names_to = "key", values_to = "campaign") %>% 
+        summarise(!!paste0("total_", metric):= sum(!!metric), .by = campaign) %>% 
+        arrange(campaign)
+    
+    # return
+    return(ret)
+    
+}
 
-# ** Clicks Table ----
-clicks_tbl <- ppc_tbl %>% 
-    select(ends_with("clicks")) %>% 
-    rowwise() %>%
-    mutate(total = sum(c_across(everything()))) %>% 
-    gather() %>% 
-    summarise(total_clicks = sum(value), .by = key) %>% 
-    mutate(key = key %>% str_remove_all("_clicks"))
+# get_aggregate_metrics(campaign_tbl, level = "campaign_id", campaign = "Facebook")
 
-# ** Leads Table ----
-leads_tbl <- ppc_tbl %>% 
-    select(ends_with("conversions")) %>% 
-    rowwise() %>%
-    mutate(total = sum(c_across(everything()))) %>% 
-    gather() %>% 
-    summarise(total_leads = sum(value), .by = key) %>% 
-    mutate(key = key %>% str_remove_all("_conversions"))
 
-# ** PPC Table ----
-cost_tbl %>% left_join(impressions_tbl) %>% 
-    left_join(clicks_tbl) %>% 
-    left_join(leads_tbl) %>% 
-    mutate(
-        ctr      = total_clicks / total_impressions,
-        cpc      = total_cost / total_clicks,
-        lead_cvr = total_leads / total_clicks
-    )
+# - Conversion Metrics Function
+get_conversion_metics <- function(data, level = "campaign", campaign = NULL) {
+    
+    # aggregates
+    cost_tbl <- get_aggregate_metrics(data, "cost", level, campaign)
+    
+    impr_tbl <- get_aggregate_metrics(data, "impressions", level, campaign)
+    
+    clicks_tbl <- get_aggregate_metrics(data, "clicks", level, campaign)
+    
+    leads_tbl <- get_aggregate_metrics(data, "conversions", level, campaign)
+    
+    
+    # ret
+    ret <- cost_tbl %>% 
+        left_join(impr_tbl) %>% 
+        left_join(clicks_tbl) %>% 
+        left_join(leads_tbl) %>% 
+        rename(total_leads = total_conversions) %>% 
+        mutate(
+            ctr      = total_clicks / total_impressions,
+            cpc      = total_cost / total_clicks,
+            cvr = total_leads / total_clicks
+        )
+    
+    # return
+    return(ret)
+    
+}
+
+# * Metrics by Campaign (Overall) ----
+campaign_metrics_tbl <- get_conversion_metics(campaign_tbl, "campaign")
 
 #' Observations:
 #' - 1. Overall ctr is inline with industry average.
@@ -120,66 +160,55 @@ cost_tbl %>% left_join(impressions_tbl) %>%
 #' - 2. Was the extra money spent on facebook worth it?
 
 
-# * PPC Analysis by Campaign ----
+# * Metrics by Campaign ID ----
+#   - Using the functions above, we calculate the metrics by individual ads
 
-# ** Function ----
-get_ad_metrics <- function(data, campaign, metric) {
-    
-    # campaign setup
-    if (campaign == "ad_words")  campaign_name = "ad_words_campaign_id"
-    if (campaign == "facebook")  campaign_name = "facebook_campaign_id"
-    
-    # group_cols setup
-    # if (campaign == "ad_words")  group_cols = c("ad_words_campaign_id")
-    # if (campaign == "facebook")  group_cols = c("facebook_campaign_id")
-    
-    # rlang setup
-    campaign_name <- rlang::sym(campaign_name)
-    #group_cols    <- rlang::enquo(group_cols)
-    
-    # calculation
-    ret_tbl <- data %>% 
-        select(!!campaign_name, matches(paste0("^", campaign, ".*", metric, "$"))) %>% 
-        #rowwise() %>%
-        #mutate(total = sum(c_across(ends_with(metric)))) %>% 
-        #pivot_longer(cols = -!!campaign_name, names_to = "name", values_to = "value") %>% 
-        #summarise(!!paste0("total_", metric):= sum(value), .by = !!group_cols) %>% 
-        #mutate(name = name %>% str_remove_all(paste0("_", metric))) %>% 
-        group_by(!!campaign_name) %>% 
-        summarise(!!paste0("total_", metric):= sum(c_across(where(is.numeric)))) %>% 
-        ungroup()
-    
-    return(ret_tbl)
-}
+# ** Adwords ----
+aw_metrics_by_ad_tbl <- get_conversion_metics(
+    data     = campaign_tbl,
+    level    = "campaign_id",
+    campaign = "Ad Words"
+)
+
+# ** Facebook ----
+fb_metrics_by_ad_tbl <- get_conversion_metics(
+    data     = campaign_tbl,
+    level    = "campaign_id",
+    campaign = "Facebook"
+)
+
+#' Observation:
+#' - 1. No outliers in ctr, cpc or cvr for either adwords or facebook.
+#' - So why is facebook till dominating adwords. Is it worth it?
+#' - Next we calculate the average cost per lead (or cac)
 
 
-get_ad_metrics_by_ad <- function(campaign) {
-    
-    if (campaign == "adwords") campaign = "ad_words"
-    
-    cost_tbl   <- get_ad_metrics(ppc_tbl, campaign = campaign, "cost")
-    impr_tbl   <- get_ad_metrics(ppc_tbl, campaign = campaign, "impressions")
-    clicks_tbl <- get_ad_metrics(ppc_tbl, campaign = campaign, "clicks")
-    leads_tbl  <- get_ad_metrics(ppc_tbl, campaign = campaign, "conversions")
-    
-    metrics_tbl <- cost_tbl %>% 
-        left_join(impr_tbl) %>% 
-        left_join(clicks_tbl) %>% 
-        left_join(leads_tbl) %>%
-        mutate(
-            ctr = total_clicks / total_impressions,
-            cpc = total_cost / total_clicks,
-            cvr = total_conversions / total_clicks
-        )
-    
-    return(metrics_tbl)
-}
+# * Cost Per Lead ----
+#   - Assuming we have a fixed budget, which platform will have the cac?
+#   - To answer this, we do a little bit of modeling
 
+# - Budget ($)
+budget <- 1000
 
-# ** Stats by Ad ----
-aw_metrics_by_ad_tbl <- get_ad_metrics_by_ad("ad_words")
+lead_acquisition_cost_tbl <- campaign_metrics_tbl %>% 
+    select(campaign, ctr, cpc, cvr) %>% 
+    mutate(clicks = budget / cpc) %>% 
+    mutate(leads = cvr * clicks) %>% 
+    mutate(lac = budget / leads)
 
-fb_metrics_by_ad_tbl <- get_ad_metrics_by_ad("facebook")
+#' Observation:
+#' - Adwords will generate more clicks than facebook .
+#' - However since facebook has higher cvr, facebook will generate more leads.
+#' - Adwords cost $5.00 for every lead compared with facebook.
+#' - At a lower selling point, cpl really matters compares with a higher selling product.
+#' - Overall facebook has the lower acquisition cost. 
+#' - We still need to analyze what happens after we acquire a lead. 
+#' 
+#' Questions:
+#' - What happens after we acquire a lead?
+#' - Do facebook leads convert to sales at a higher rate than leads from adwords?
+#' - How much do facebook customers spend vs adwords customers?
+
 
 
 
