@@ -38,7 +38,7 @@ get_campaign_data <- function() {
         clean_names() %>% 
         select(date, starts_with("ad_words")) %>% 
         `colnames<-`(colnames) %>% 
-        mutate(campaign = "Ad Words")
+        mutate(campaign = "AdWords")
     
     # facebook tbl
     facebook_tbl <- readxl::read_excel(
@@ -77,7 +77,7 @@ campaign_tbl %>% glimpse()
 # ** Function ----
 
 # - Aggregates
-get_aggregate_metrics <- function(data, metric = "cost", level = "campaign", campaign = NULL) {
+get_campaign_metrics <- function(data, metric = "cost", level = "campaign", campaign = NULL) {
     
     # rlang setup
     metric <- rlang::sym(metric)
@@ -86,8 +86,8 @@ get_aggregate_metrics <- function(data, metric = "cost", level = "campaign", cam
     # filtering setup
     if (is.null(campaign)) {
         campaign_name = campaign
-    } else if (campaign == "Ad Words") {
-        campaign_name = "Ad Words"
+    } else if (campaign == "AdWords") {
+        campaign_name = "AdWords"
     } else {
         campaign_name = "Facebook"
     }
@@ -110,20 +110,21 @@ get_aggregate_metrics <- function(data, metric = "cost", level = "campaign", cam
     
 }
 
-# get_aggregate_metrics(campaign_tbl, level = "campaign_id", campaign = "Facebook")
+# get_campaign_metrics(campaign_tbl, level = "campaign_id", campaign = "Facebook")
+# get_campaign_metrics(campaign_tbl, metric = "cost", level = "campaign")
 
 
 # - Conversion Metrics Function
-get_conversion_metics <- function(data, level = "campaign", campaign = NULL) {
+get_campaign_metrics_table <- function(data, level = "campaign", campaign = NULL) {
     
     # aggregates
-    cost_tbl <- get_aggregate_metrics(data, "cost", level, campaign)
+    cost_tbl <- get_campaign_metrics(data, "cost", level, campaign)
     
-    impr_tbl <- get_aggregate_metrics(data, "impressions", level, campaign)
+    impr_tbl <- get_campaign_metrics(data, "impressions", level, campaign)
     
-    clicks_tbl <- get_aggregate_metrics(data, "clicks", level, campaign)
+    clicks_tbl <- get_campaign_metrics(data, "clicks", level, campaign)
     
-    leads_tbl <- get_aggregate_metrics(data, "conversions", level, campaign)
+    leads_tbl <- get_campaign_metrics(data, "conversions", level, campaign)
     
     
     # ret
@@ -144,7 +145,7 @@ get_conversion_metics <- function(data, level = "campaign", campaign = NULL) {
 }
 
 # * Metrics by Campaign (Overall) ----
-campaign_metrics_tbl <- get_conversion_metics(campaign_tbl, "campaign")
+campaign_metrics_tbl <- get_campaign_metrics_table(campaign_tbl, "campaign")
 
 #' Observations:
 #' - 1. Overall ctr is inline with industry average.
@@ -210,14 +211,23 @@ lead_acquisition_cost_tbl <- campaign_metrics_tbl %>%
 #' - How much do facebook customers spend vs adwords customers?
 
 
-
-
-
-
 # *****************************************************************************
 # **** ----
-# SECTION NAME ----
+# SAVE FUNCTIONS ----
 # *****************************************************************************
+
+# * Save Functions ----
+dump(
+    list = c(
+        "get_campaign_data",
+        "get_campaign_metrics",
+        "get_campaign_metrics_table"
+    ),
+    file = "../functions/ppc_functions.R",
+    append = FALSE
+)
+
+
 # *****************************************************************************
 # **** ----
 # SECTION NAME ----
