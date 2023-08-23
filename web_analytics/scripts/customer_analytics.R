@@ -206,6 +206,57 @@ age_demographics_tbl %>%
     ) %>% 
     arrange(campaign)
 
+# - Observations:
+# - Facebook tends to attract more millennial than adwords.
+# - Forbes survey found that only 1% of millennial surveyed said they will trust 
+#   a brand based on an ad. Millennial believe that advertising is all spin and 
+#   not authentic.
+#   - Millennials are more trusting of their friends, influencers and social network. 
+# - SHOULD WE KILL ADWORDS? Since facebook is outperforming adwords in all metrics.
+# - Adwords is bringing in a different set of customers. Good diversification.
+# - Adwords might be more expensive but we should keep it.
+# - People still rely on google and still tend to click on ads. 
+
+
+# *****************************************************************************
+# **** ----
+# NPS ANALYSIS ----
+# *****************************************************************************
+nps_pct_tbl <- survey_tbl %>% 
+    select(lead_source, recommend) %>% 
+    mutate(total = "Total") %>% 
+    pivot_longer(
+        cols = -c(recommend),
+        names_to = "name",
+        values_to = "campaign"
+    ) %>% 
+    count(campaign, recommend) %>% 
+    group_by(campaign) %>% 
+    mutate(pct = n/sum(n)) %>% 
+    ungroup()
+
+nps_pct_tbl %>% print(n = 50)
+    
+nps_pct_tbl %>% 
+    filter(recommend <= 6) %>% 
+    summarise(below_6 = sum(pct), .by = campaign) %>% 
+    left_join(
+        nps_pct_tbl %>% 
+            filter(recommend > 8) %>% 
+            summarise(above_9 = sum(pct), .by = campaign)
+    ) %>% 
+    mutate(nps = above_9 - below_6)
+    
+
+# *****************************************************************************
+# **** ----
+# SECTION NAME ----
+# *****************************************************************************
+
+# *****************************************************************************
+# **** ----
+# SECTION NAME ----
+# *****************************************************************************
 
 # *****************************************************************************
 # **** ----
