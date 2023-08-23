@@ -176,6 +176,20 @@ lead_acquisition_cost_tbl <- ppc_metrics_tbl %>%
     mutate(leads = cvr * clicks) %>% 
     mutate(cpl = budget / leads)
 
+# - Cost Per Lead Function 
+get_cost_per_lead <- function(budget, ppc_metrics_data) {
+    
+    # uses ppc metrics data
+    lead_acquisition_cost_tbl <- ppc_metrics_tbl %>% 
+        select(campaign, ctr, cpc, cvr) %>% 
+        mutate(clicks = budget / cpc) %>% 
+        mutate(leads = cvr * clicks) %>% 
+        mutate(cpl = budget / leads)
+    
+    return(lead_acquisition_cost_tbl)
+    
+}
+
 #' Observation:
 #' - Adwords will generate more clicks than facebook .
 #' - However since facebook has higher cvr, facebook will generate more leads.
@@ -199,7 +213,8 @@ lead_acquisition_cost_tbl <- ppc_metrics_tbl %>%
 dump(
     list = c(
         "get_ppc_metrics",
-        "get_ppc_metrics_table"
+        "get_ppc_metrics_table",
+        "get_cost_per_lead"
     ),
     file = "../functions/ppc_functions.R",
     append = FALSE
