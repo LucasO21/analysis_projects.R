@@ -60,3 +60,15 @@ function(data, level = "campaign", campaign = NULL) {
     return(ppc_metrics_tbl)
     
 }
+get_cost_per_lead <-
+function(budget, ppc_metrics_data) {
+    
+    lead_acquisition_cost_tbl <- ppc_metrics_tbl %>% 
+        select(campaign, ctr, cpc, cvr) %>% 
+        mutate(clicks = budget / cpc) %>% 
+        mutate(leads = cvr * clicks) %>% 
+        mutate(cpl = budget / leads)
+    
+    return(lead_acquisition_cost_tbl)
+    
+}
