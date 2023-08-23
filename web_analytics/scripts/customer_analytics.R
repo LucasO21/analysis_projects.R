@@ -263,7 +263,7 @@ nps_pct_tbl %>%
 # SURVEY ANALYSIS ----
 # *****************************************************************************
 
-# * Survey Analysis
+# * Survey Analysis ----
 survey_tbl %>% 
     select(lead_source, hear_about) %>% 
     mutate(total = "Total") %>% 
@@ -285,7 +285,8 @@ survey_tbl %>%
 
 # * Function ----
 get_pivot_table <- function(data, select_cols = NULL, unpivot_cols = NULL,
-                                     group_cols = NULL, return = "volume") {
+                            group_cols = NULL, return = "volume", format = FALSE) {
+    
     
     # rlang setup
     select_cols   <- rlang::enquos(select_cols)
@@ -321,15 +322,21 @@ get_pivot_table <- function(data, select_cols = NULL, unpivot_cols = NULL,
         result_tbl <- group_tbl %>% 
             select(-n) %>% 
             pivot_wider(names_from = campaign, values_from = pct, values_fill = 0) %>% 
-            adorn_totals("row", name = "Grand Total") %>% 
-            mutate_at(2:4, ~format(scales::percent(., accuracy = 0.01), nsmall = 4))
+            adorn_totals("row", name = "Grand Total")
+        
+        if (format) {
+            result_tbl <- result_tbl %>% 
+                mutate_at(2:4, ~format(scales::percent(., accuracy = 0.01), nsmall = 4))
+        } else {
+                result_tbl <- result_tbl
+            }
     }
     
     return(result_tbl)
 }
 
 # * First Contact Table ----
-get_pivot_table(
+first_contact_tbl <- get_pivot_table(
     data         = survey_tbl,
     select_cols  = c(lead_source, first_contact),
     unpivot_cols = first_contact,
@@ -345,12 +352,75 @@ re_purchase_tbl <- get_pivot_table(
     return       = "percent"
 )
 
+# * Repeat Customers ----
+repeat_customers_tbl <- re_purchase_tbl %>% 
+    filter(re_purchase %in% c("Very likely", "Likely")) %>% 
+    bind_rows(
+        tibble(
+            re_purchase = "Repeat",
+            AdWords     = sum(re_purchase_tbl[1:2, ]$AdWords),
+            Facebook    = sum(re_purchase_tbl[1:2, ]$Facebook),
+            Total       = sum(re_purchase_tbl[1:2, ]$Total),
+        )
+    )
+    
+
+#' - Observation:
+#' - 62% of millennial said that if a brand engages with them on social networks,
+#' - they are more likely to become a loyal customer.
+#' - Since facebook is successful, maybe we should utilize other social networks. 
+
 
 
 # *****************************************************************************
 # **** ----
-# SECTION NAME ----
+# CUSTOMER LIFETIME VALUE (CLV) ----
 # *****************************************************************************
+
+# * CLV Analysis ----
+
+discount_rate <- 0.10
+
+gross_margin <- 0.75
+
+customer_metrics_tbl %>% 
+    select(campaign, avg_1yr_revenue, customer_acq_cost) %>% 
+    
+    # gross profit
+    mutate(gross_profit = avg_1yr_revenue * gross_margin) %>% 
+    
+    # customer retention rate
+    left_join(
+        repeat_customers_tbl %>% 
+            filter(re_purchase == "Repeat") %>% 
+            select(!re_purchase) %>% 
+            gather() %>% 
+            rename(customer_retention_rate = value),
+        by = c("campaign" = "key")
+    ) %>% 
+    
+    # clv gross
+    mutate(
+        clv_gross = gross_profit * (
+            customer_retention_rate / (1 + discount_rate - customer_retention_rate)
+        )
+    ) %>% 
+    
+    # clv net
+    mutate(clv_net = clv_gross - customer_acq_cost)
+
+#' - Observation:
+#' - Facebook has higher clv because facebook has better customer retention. 
+
+
+#' - Recommendation:
+#' - Create more campaigns on facebook,linkedin, and tiktok and gain more followers.
+#' - It is cheaper to gain leads organically than paid ads.
+#' - Tailor promotions to increase customer retention.
+#' - Continue to analyze ad data monthly. 
+    
+    
+
 
 # *****************************************************************************
 # **** ----
