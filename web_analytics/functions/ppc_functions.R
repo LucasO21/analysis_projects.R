@@ -1,40 +1,4 @@
-get_campaign_data <-
-function() {
-    
-    # column names
-    colnames <- c("date", "campaign_id", "impressions", "clicks", "cost", "ctr", 
-                  "conversions", "cvr")
-    
-    # ad words tbl
-    adwords_tbl <- readxl::read_excel(
-        path  = "../data/Marketing+Analytics+Case+Study.xlsm",
-        sheet = "PPC Data",
-        skip  = 3
-    ) %>% 
-        clean_names() %>% 
-        select(date, starts_with("ad_words")) %>% 
-        `colnames<-`(colnames) %>% 
-        mutate(campaign = "AdWords")
-    
-    # facebook tbl
-    facebook_tbl <- readxl::read_excel(
-        path  = "../data/Marketing+Analytics+Case+Study.xlsm",
-        sheet = "PPC Data",
-        skip  = 3
-    ) %>% 
-        clean_names() %>% 
-        select(date, starts_with("facebook")) %>% 
-        `colnames<-`(colnames) %>% 
-        mutate(campaign = "Facebook")
-    
-    # combined tbl
-    combined_tbl <- bind_rows(adwords_tbl, facebook_tbl) %>% 
-        mutate(date = ymd(date))
-    
-    return(combined_tbl)
-    
-}
-get_campaign_metrics <-
+get_ppc_metrics <-
 function(data, metric = "cost", level = "campaign", campaign = NULL) {
     
     # rlang setup
@@ -67,21 +31,21 @@ function(data, metric = "cost", level = "campaign", campaign = NULL) {
     return(ret)
     
 }
-get_campaign_metrics_table <-
+get_ppc_metrics_table <-
 function(data, level = "campaign", campaign = NULL) {
     
     # aggregates
-    cost_tbl <- get_campaign_metrics(data, "cost", level, campaign)
+    cost_tbl   <- get_ppc_metrics(data, "cost", level, campaign)
     
-    impr_tbl <- get_campaign_metrics(data, "impressions", level, campaign)
+    impr_tbl   <- get_ppc_metrics(data, "impressions", level, campaign)
     
-    clicks_tbl <- get_campaign_metrics(data, "clicks", level, campaign)
+    clicks_tbl <- get_ppc_metrics(data, "clicks", level, campaign)
     
-    leads_tbl <- get_campaign_metrics(data, "conversions", level, campaign)
+    leads_tbl  <- get_ppc_metrics(data, "conversions", level, campaign)
     
     
-    # ret
-    ret <- cost_tbl %>% 
+    # calculation
+    ppc_metrics_tbl <- cost_tbl %>% 
         left_join(impr_tbl) %>% 
         left_join(clicks_tbl) %>% 
         left_join(leads_tbl) %>% 
@@ -93,6 +57,6 @@ function(data, level = "campaign", campaign = NULL) {
         )
     
     # return
-    return(ret)
+    return(ppc_metrics_tbl)
     
 }
