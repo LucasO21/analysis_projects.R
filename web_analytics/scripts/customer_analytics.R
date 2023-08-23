@@ -69,7 +69,7 @@ survey_tbl <- readxl::read_excel(
             "age", 
             "age_group", 
             "recommend", 
-            "hear_about",
+            "first_contact",
             "re_purchase", 
             "re_purchase_reason"
         )
@@ -82,6 +82,11 @@ survey_tbl <- readxl::read_excel(
         age %>% between(36, 45) ~ "36 - 45",
         age %>% between(46, 55) ~ "46 - 55",
         TRUE                    ~ "55+"
+    )) %>% 
+    
+    # mutate
+    mutate(re_purchase = re_purchase %>% fct_relevel(
+        "Very likely", "Likely", "Not likely", "Not sure", "Never again"
     ))
 
 survey_tbl %>% glimpse()
@@ -246,12 +251,101 @@ nps_pct_tbl %>%
             summarise(above_9 = sum(pct), .by = campaign)
     ) %>% 
     mutate(nps = above_9 - below_6)
+
+#' - Observation:
+#' - Facebook has much higher nps than adwords.
+#' - This could be because the majority of our customers come from facebook.
+#' - Additionally facebook customers are much younger than adwords customers.
     
 
 # *****************************************************************************
 # **** ----
-# SECTION NAME ----
+# SURVEY ANALYSIS ----
 # *****************************************************************************
+
+# * Survey Analysis
+survey_tbl %>% 
+    select(lead_source, hear_about) %>% 
+    mutate(total = "Total") %>% 
+    pivot_longer(
+        cols = -c(hear_about),
+        names_to = "name",
+        values_to = "campaign"
+    ) %>% 
+    count(campaign, hear_about) %>% 
+    mutate(pct = n/sum(n), .by = campaign) %>% 
+    select(-n) %>% 
+    pivot_wider(names_from = campaign, values_from = pct)
+
+
+#' - Observation:
+#' - Facebook is the best channel at word of mouth, given that it is a social network.
+#' - Adwords is better for online search
+
+
+# * Function ----
+get_pivot_table <- function(data, select_cols = NULL, unpivot_cols = NULL,
+                                     group_cols = NULL, return = "volume") {
+    
+    # rlang setup
+    select_cols   <- rlang::enquos(select_cols)
+    unpivot_cols  <- rlang::enquo(unpivot_cols)
+    group_cols    <- rlang::enquos(group_cols)
+    
+    # group calc
+    group_tbl <- data %>% 
+        select(!!!select_cols) %>% 
+        mutate(total = "Total") %>%   
+        pivot_longer(
+            cols      = -!!unpivot_cols,
+            names_to  = "name",
+            values_to = "campaign"
+        ) %>% 
+        count(campaign, !!unpivot_cols) %>% 
+        mutate(pct = n/sum(n), .by = campaign) 
+    
+    # total calc
+    # total_tbl <- group_tbl %>% 
+    #     summarise(n = sum(n), .by = campaign) %>% 
+    #     mutate(pct = n/sum(n))
+    
+    
+    # final calc
+    if (return == "volume") {
+        result_tbl <- group_tbl %>% 
+            select(-pct) %>% 
+            pivot_wider(names_from = campaign, values_from = n, values_fill = 0) %>% 
+            adorn_totals("row", name = "Grand Total")
+        
+    } else if (return == "percent") {
+        result_tbl <- group_tbl %>% 
+            select(-n) %>% 
+            pivot_wider(names_from = campaign, values_from = pct, values_fill = 0) %>% 
+            adorn_totals("row", name = "Grand Total") %>% 
+            mutate_at(2:4, ~format(scales::percent(., accuracy = 0.01), nsmall = 4))
+    }
+    
+    return(result_tbl)
+}
+
+# * First Contact Table ----
+get_pivot_table(
+    data         = survey_tbl,
+    select_cols  = c(lead_source, first_contact),
+    unpivot_cols = first_contact,
+    return       = "percent"
+)
+
+
+# * Re - Purchase Table ----
+re_purchase_tbl <- get_pivot_table(
+    data         = survey_tbl,
+    select_cols  = c(lead_source, re_purchase),
+    unpivot_cols = re_purchase,
+    return       = "percent"
+)
+
+
 
 # *****************************************************************************
 # **** ----
@@ -262,3 +356,7 @@ nps_pct_tbl %>%
 # **** ----
 # SECTION NAME ----
 # *****************************************************************************
+
+
+
+
