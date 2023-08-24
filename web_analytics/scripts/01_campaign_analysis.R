@@ -7,7 +7,7 @@
 # ABOUT ----
 # *****************************************************************************
 
-#' - In this script, we want to answer some key questions;
+#' - In this script, we want to answer some key questions
 #' - 1. Which PPC source has the highest/lowest CTR?
 #' - 2. Which PPC source has the highest conversions of clicks to leads?
 #' - 3. Why might FB have a higher conversion rate?
@@ -179,10 +179,10 @@ lead_acquisition_cost_tbl <- ppc_metrics_tbl %>%
     mutate(cpl = budget / leads)
 
 # - Cost Per Lead Function 
-get_cost_per_lead <- function(budget, ppc_metrics_data) {
+get_cost_per_lead <- function(budget, data) {
     
     # uses ppc metrics data
-    lead_acquisition_cost_tbl <- ppc_metrics_tbl %>% 
+    lead_acquisition_cost_tbl <- data %>% 
         select(campaign, ctr, cpc, cvr) %>% 
         mutate(clicks = budget / cpc) %>% 
         mutate(leads = cvr * clicks) %>% 
@@ -191,6 +191,11 @@ get_cost_per_lead <- function(budget, ppc_metrics_data) {
     return(lead_acquisition_cost_tbl)
     
 }
+
+get_cost_per_lead(1000, ppc_metrics_tbl)
+
+# Output:
+# get_ppc_metrics >> get_ppc_metrics_table >> get_cost_per_lead
 
 #' Observation:
 #' - Adwords will generate more clicks than facebook .
@@ -204,6 +209,7 @@ get_cost_per_lead <- function(budget, ppc_metrics_data) {
 #' - What happens after we acquire a lead?
 #' - Do facebook leads convert to sales at a higher rate than leads from adwords?
 #' - How much do facebook customers spend vs adwords customers?
+
 
 
 # *****************************************************************************
