@@ -68,7 +68,7 @@ customer_metrics_tbl <- leads_tbl %>%
         values_to = "campaign"
     ) %>% 
     summarise(
-        count_of_customers = n(),
+        total_customers = n(),
         avg_days_to_purch  = mean(days_to_purchase, na.rm = TRUE),
         avg_1yr_revenue    = mean(total_1yr_purch_net, na.rm = TRUE),
         touch_points       = mean(touch_points, na.rm = TRUE),
@@ -92,7 +92,7 @@ customer_metrics_tbl <- leads_tbl %>%
             level   = "campaign"
         )
     ) %>% 
-    mutate(customer_acq_cost = total_cost / count_of_customers) %>% 
+    mutate(customer_acq_cost = total_cost / total_customers) %>% 
     select(-total_cost) %>% 
     
     # lead to customer cvr
@@ -103,7 +103,7 @@ customer_metrics_tbl <- leads_tbl %>%
             level  = "campaign"
         )
     ) %>% 
-    mutate(lead_cvr = count_of_customers / total_conversions) %>% 
+    mutate(lead_cvr = total_customers / total_conversions) %>% 
     select(-total_conversions)
 
 customer_metrics_tbl
@@ -129,7 +129,7 @@ get_customer_metrics <- function(data) {
             values_to = "campaign"
         ) %>% 
         summarise(
-            count_of_customers = n(),
+            total_customers = n(),
             avg_days_to_purch  = mean(days_to_purchase, na.rm = TRUE),
             avg_1yr_revenue    = mean(total_1yr_purch_net, na.rm = TRUE),
             touch_points       = mean(touch_points, na.rm = TRUE),
@@ -153,7 +153,7 @@ get_customer_metrics <- function(data) {
                 level   = "campaign"
             )
         ) %>% 
-        mutate(customer_acq_cost = total_cost / count_of_customers) %>% 
+        mutate(customer_acq_cost = total_cost / total_customers) %>% 
         select(-total_cost) %>% 
         
         # lead to customer cvr
@@ -164,7 +164,7 @@ get_customer_metrics <- function(data) {
                 level  = "campaign"
             )
         ) %>% 
-        mutate(lead_cvr = count_of_customers / total_conversions) %>% 
+        mutate(lead_cvr = total_customers / total_conversions) %>% 
         select(-total_conversions)
     
     return(ret)
