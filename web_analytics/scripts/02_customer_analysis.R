@@ -382,7 +382,8 @@ repeat_customers_tbl <- repeat_purchase_tbl %>%
             Total           = sum(repeat_purchase_tbl[1:2, ]$Total),
         )
     )
-    
+
+repeat_purchase_tbl %>% write_rds("../data/data_clean/repeat_customers_data.rds")
 
 #' - Observation:
 #' - 62% of millennial said that if a brand engages with them on social networks,
