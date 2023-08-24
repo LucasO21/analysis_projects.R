@@ -54,7 +54,7 @@ customer_retention_tbl <- read_rds("../data/data_clean/customer_retention_data.r
 
 # *****************************************************************************
 # **** ----
-# ASSUMPTION TABLE 1 ----
+# NEW CHANNEL ESTIMATES ----
 # *****************************************************************************
 
 # - Create a table with estimates (assumptions) for clicks, leads, cost, etc
@@ -104,14 +104,16 @@ new_channels_clv_estimate_tbl <- ppc_metrics_tbl %>%
     bind_rows(new_ad_channels_tbl) %>% 
     
     # lead conversion rate
-    mutate(click_to_customer_cvr = total_customers / total_clicks) %>% 
+    mutate(click_cvr = total_customers / total_clicks) %>% 
     
     # cac
     mutate(cac = total_cost / total_customers) %>% 
     
     # clv estimates
     mutate(gross_profit = avg_1yr_revenue * gross_margin) %>% 
-    mutate(clv_gross = gross_profit * (retention_rate/(1 + discount_rate - retention_rate))) %>% 
+    mutate(clv_gross = gross_profit * (
+        retention_rate / (1 + discount_rate - retention_rate)
+        )) %>% 
     mutate(clv_net = clv_gross - cac)
 
 
@@ -125,16 +127,72 @@ new_channels_clv_estimate_tbl <- ppc_metrics_tbl %>%
 # NEW CUSTOMERS ESTIMATE PER $1000 ----
 # *****************************************************************************
 
-# - Based on assumptions above, for every $1000 spent, how many new customers can we acquire?
+# - Based on assumptions above, for every $1000 spent, how many new customers 
+#   can we acquire?
 
 budget <- 1000
 
 new_customer_per_1000_tbl <- new_channels_clv_estimate_tbl %>% 
     mutate(cpc = total_cost / total_clicks) %>% 
     mutate(est_clicks = budget / cpc) %>% 
-    mutate(est_customers = click_to_customer_cvr * est_clicks) %>% 
-    select(campaign, cpc : est_customers)
+    mutate(est_customers = click_cvr * est_clicks)
+
+new_customer_per_1000_tbl %>% glimpse()
+
+
+
+
+# *****************************************************************************
+# **** ----
+# CASH FLOW ASSUMPTIONS ----
+# *****************************************************************************
+
+# * Scenario 1 ----
+new_customer_per_1000_tbl %>% glimpse()
+
+# ** Marketing Costs ----
+scenario                  <- 1
+marketing_manager_salary  <- 80000
+current_salary_allocation <- 0.20
+social_media_tools_cost   <- 250 # per month
+channel_list <- c("AdWords", "Facebook", "Linkedin", "Spotify", "TikTok")
+
+
+# ** Paid Customer Acquisition ----
+paid_assumptions_inputs_tbl <- tibble(
+    campaign                  = channel_list,
+    monthly_ad_spend          = c(2000, 4000, 2000, 5000, 4000),
+    est_click_cvr_uplift      = c(0.02, 0.03, 0, 0, 0),
+    est_retention_rate_uplift = c(0.02, 0.03, 0.02, 0.02, 0.03)
+)
+
+
+paid_assumptions_tbl <- new_customer_per_1000_tbl %>% 
+    select(campaign, cpc, retention_rate, click_cvr) %>% 
+    left_join(
+        paid_assumptions_tbl
+    ) %>% 
     
+    mutate(est_clicks = monthly_ad_spend / cpc) %>% 
+    mutate(est_new_click_cvr = case_when(
+        scenario == 0 ~ click_cvr,
+        TRUE          ~ click_cvr + est_click_cvr_uplift
+    )) %>% 
+    mutate(est_new_customers = est_new_click_cvr * est_clicks) %>% 
+    mutate(est_new_retention_rate = case_when(
+        scenario == 0 ~ retention_rate,
+        TRUE          ~ retention_rate + est_retention_rate_uplift
+    ))
+    
+    
+
+    
+
+
+
+
+
+
 
 
 
@@ -143,7 +201,15 @@ new_customer_per_1000_tbl <- new_channels_clv_estimate_tbl %>%
 # DATA IMPORT ----
 # *****************************************************************************
 
+# *****************************************************************************
+# **** ----
+# DATA IMPORT ----
+# *****************************************************************************
 
+# *****************************************************************************
+# **** ----
+# DATA IMPORT ----
+# *****************************************************************************
 
 # *****************************************************************************
 # **** ----
