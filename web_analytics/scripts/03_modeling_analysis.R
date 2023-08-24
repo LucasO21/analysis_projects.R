@@ -48,31 +48,50 @@ survey_tbl <- read_rds("../data/data_clean/survey_data.rds")
 # * Campaign Data ----
 campaign_tbl <- read_rds("../data/data_clean/campaign_data.rds")
 
+# * Repeat Customers Data ----
+customer_retention_tbl <- read_rds("../data/data_clean/customer_retention_data.rds")
+
 
 # *****************************************************************************
 # **** ----
 # ASSUMPTION TABLE 1 ----
 # *****************************************************************************
 
+# - Create a table with estimates (assumptions) for clicks, leads, cost, etc
+#   from other channels like linkedin, spotify and tiktok, assuming we decide to
+#   create campaigns for those platforms.
+
 # * New Ad Channels Data ----
 new_ad_channels_tbl <- tibble(
     campaign        = c("Linkedin", "Spotify", "TikTok"),
     total_clicks    = c(800, 100000, 1000),
+    total_leads     = c(75, 1500, 150),
     total_cost      = c(6000, 17000, 2000),
-    total_leads     = c(75, 1500, 500),
-    total_customers = c(0.28 * 75, 0.28 * 1500, 0.28 * 500),
+    total_customers = c(0.40 * 75, 0.28 * 1500, 0.28 * 500),
     avg_1yr_revenue = c(335, 330, 335),
     retention_rate  = c(0.70, 0.62, 0.68)
 )
 
-ppc_metrics_tbl %>% 
+
+# *****************************************************************************
+# **** ----
+# CLV ESTIMATION ----
+# *****************************************************************************
+
+# - Estimate clv for these new platforms based on assumptions above.
+
+# CLV Estimates ----
+gross_margin  <- 0.75
+discount_rate <- 0.10
+
+new_channels_clv_estimate_tbl <- ppc_metrics_tbl %>% 
     select(campaign, total_clicks, total_leads, total_cost) %>% 
     left_join(
         customer_metrics_tbl %>% 
-            select(campaign, count_of_customers, avg_1yr_revenue)
+            select(campaign, total_customers, avg_1yr_revenue)
     ) %>% 
     left_join(
-        repeat_customers_tbl %>% 
+        customer_retention_tbl %>% 
             filter(repeat_purchase == "Repeat") %>% 
             select(-repeat_purchase) %>% 
             gather(key = "campaign", value = "retention_rate")
@@ -80,14 +99,42 @@ ppc_metrics_tbl %>%
     
     # remove total row
     filter(campaign != "Total") %>% 
+    
+    # bind rows with new ad channels data
+    bind_rows(new_ad_channels_tbl) %>% 
+    
+    # lead conversion rate
+    mutate(click_to_customer_cvr = total_customers / total_clicks) %>% 
+    
+    # cac
+    mutate(cac = total_cost / total_customers) %>% 
+    
+    # clv estimates
+    mutate(gross_profit = avg_1yr_revenue * gross_margin) %>% 
+    mutate(clv_gross = gross_profit * (retention_rate/(1 + discount_rate - retention_rate))) %>% 
+    mutate(clv_net = clv_gross - cac)
 
+
+# - Observation:
+# - We might as well advertise on these platforms since we will potentially make
+# - money from them. 
 
 
 # *****************************************************************************
 # **** ----
-# DATA IMPORT ----
+# NEW CUSTOMERS ESTIMATE PER $1000 ----
 # *****************************************************************************
 
+# - Based on assumptions above, for every $1000 spent, how many new customers can we acquire?
+
+budget <- 1000
+
+new_customer_per_1000_tbl <- new_channels_clv_estimate_tbl %>% 
+    mutate(cpc = total_cost / total_clicks) %>% 
+    mutate(est_clicks = budget / cpc) %>% 
+    mutate(est_customers = click_to_customer_cvr * est_clicks) %>% 
+    select(campaign, cpc : est_customers)
+    
 
 
 
