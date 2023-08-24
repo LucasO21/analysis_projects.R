@@ -4,6 +4,18 @@
 
 # *****************************************************************************
 # **** ----
+# ABOUT ----
+# *****************************************************************************
+
+#' - In this script, we want to answer some key questions;
+#' - 1. Which PPC source has the highest/lowest CTR?
+#' - 2. Which PPC source has the highest conversions of clicks to leads?
+#' - 3. Why might FB have a higher conversion rate?
+#' - 4. Based on this information, is one PPC ad type better than the other?
+#' 
+
+# *****************************************************************************
+# **** ----
 # SETUP ----
 # *****************************************************************************
 
@@ -16,16 +28,6 @@ library(janitor)
 library(lubridate)
 library(timetk)
 
-# *****************************************************************************
-# **** ----
-# KEY QUESTIONS ----
-# *****************************************************************************
-
-#' - 1. Which PPC source has the highest/lowest CTR?
-#' - 2. Which PPC source has the highest conversions of clicks to leads?
-#' - 3. Why might FB have a higher conversion rate?
-#' - 4. Based on this information, is one PPC ad type better than the other?
-#' 
 
 # *****************************************************************************
 # **** ----
