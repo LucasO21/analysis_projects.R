@@ -85,7 +85,7 @@ function(data, budget = 1000, level = "campaign",
     if (output == "cpl") {
         ret <- cpl
     } else {
-        ret <- "metrics"
+        ret <- metrics
     }
     
     return(ret)
