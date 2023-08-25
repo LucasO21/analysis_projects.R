@@ -1,5 +1,6 @@
 get_ppc_metrics <-
-function(data, metric = "cost", level = "campaign", campaign = NULL) {
+function(data, metric = "cost", level = "campaign", 
+                            campaign = NULL) {
     
     # rlang setup
     metric <- rlang::sym(metric)
@@ -51,9 +52,9 @@ function(data, level = "campaign", campaign = NULL) {
         left_join(leads_tbl) %>% 
         rename(total_leads = total_conversions) %>% 
         mutate(
-            ctr      = total_clicks / total_impressions,
-            cpc      = total_cost / total_clicks,
-            cvr = total_leads / total_clicks
+            ctr     = total_clicks / total_impressions,
+            cpc     = total_cost / total_clicks,
+            ctl_cvr = total_leads / total_clicks
         )
     
     # return
@@ -61,14 +62,32 @@ function(data, level = "campaign", campaign = NULL) {
     
 }
 get_cost_per_lead <-
-function(budget, ppc_metrics_data) {
+function(data, budget) {
     
-    lead_acquisition_cost_tbl <- ppc_metrics_tbl %>% 
-        select(campaign, ctr, cpc, cvr) %>% 
+    # uses ppc metrics data
+    cost_per_lead_tbl <- data %>% 
+        select(campaign, ctr, cpc, ctl_cvr) %>% 
         mutate(clicks = budget / cpc) %>% 
-        mutate(leads = cvr * clicks) %>% 
+        mutate(leads = ctl_cvr * clicks) %>% 
         mutate(cpl = budget / leads)
     
-    return(lead_acquisition_cost_tbl)
+    return(cost_per_lead_tbl)
+    
+}
+get_ppc_final_output <-
+function(data, budget = 1000, level = "campaign",
+                                 output = "cpl") {
+    
+    metrics <- get_ppc_metrics_table(data, level = "campaign") 
+        
+    cpl <- get_cost_per_lead(data = metrics, budget = budget)
+    
+    if (output == "cpl") {
+        ret <- cpl
+    } else {
+        ret <- "metrics"
+    }
+    
+    return(ret)
     
 }

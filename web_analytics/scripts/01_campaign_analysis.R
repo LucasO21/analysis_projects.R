@@ -12,7 +12,18 @@
 #' - 2. Which PPC source has the highest conversions of clicks to leads?
 #' - 3. Why might FB have a higher conversion rate?
 #' - 4. Based on this information, is one PPC ad type better than the other?
-#' 
+
+
+# *****************************************************************************
+# **** ----
+# GLOSSARY ----
+# *****************************************************************************
+#' - ctr: click through rate
+#' - cpc: cost per click
+#' - ctl_cvr: click to lead conversion rate
+#' - cpl: cost per lead
+#' - cac: customer acquisition cost
+
 
 # *****************************************************************************
 # **** ----
@@ -26,17 +37,6 @@ setwd(here::here("web_analytics", "scripts"))
 library(tidyverse)
 library(janitor)
 library(lubridate)
-library(timetk)
-
-
-# *****************************************************************************
-# **** ----
-# GLOSSARY ----
-# *****************************************************************************
-#' - ctr: click through rate
-#' - cpc: cost per click
-#' - cvr: conversion rate (lead conversion rate)
-#' - cpl: cost per lead
 
 
 # *****************************************************************************
@@ -53,12 +53,13 @@ ppc_tbl %>% glimpse()
 # PPC ANALYSIS ----
 # *****************************************************************************
 
-# * Metrics by Ad Campaign ----
+# * Metrics by Campaign ----
 
 # ** Function ----
 
 # - Aggregates
-get_ppc_metrics <- function(data, metric = "cost", level = "campaign", campaign = NULL) {
+get_ppc_metrics <- function(data, metric = "cost", level = "campaign", 
+                            campaign = NULL) {
     
     # rlang setup
     metric <- rlang::sym(metric)
@@ -91,8 +92,8 @@ get_ppc_metrics <- function(data, metric = "cost", level = "campaign", campaign 
     
 }
 
-# get_campaign_metrics(ppc_tbl, level = "campaign_id", campaign = "Facebook")
-# get_campaign_metrics(ppc_tbl, metric = "cost", level = "campaign")
+# get_ppc_metrics(ppc_tbl, level = "campaign_id", campaign = "Facebook")
+# get_ppc_metrics(ppc_tbl, metric = "cost", level = "campaign")
 
 
 # - Conversion Metrics Function
@@ -115,9 +116,9 @@ get_ppc_metrics_table <- function(data, level = "campaign", campaign = NULL) {
         left_join(leads_tbl) %>% 
         rename(total_leads = total_conversions) %>% 
         mutate(
-            ctr = total_clicks / total_impressions,
-            cpc = total_cost / total_clicks,
-            cvr = total_leads / total_clicks
+            ctr     = total_clicks / total_impressions,
+            cpc     = total_cost / total_clicks,
+            ctl_cvr = total_leads / total_clicks
         )
     
     # return
@@ -130,7 +131,7 @@ ppc_metrics_tbl <- get_ppc_metrics_table(ppc_tbl, "campaign")
 
 #' Observations:
 #' - 1. Overall ctr is inline with industry average.
-#' - 2. Ad words here has lower CTR than Facebook and below industry average, which is unusual.
+#' - 2. Ad words here has lower CTR than Facebook and below industry avg, which is unusual.
 #' - 3. Total cost per click is inline with industry average.
 #' - 4. We spent more on facebook to get clicks than ad words. 
 #' - 5. We got more clicks from facebook but we also spent more to get those clicks. 
@@ -172,27 +173,54 @@ get_ppc_metrics_table(
 # - Budget ($)
 budget <- 1000
 
-lead_acquisition_cost_tbl <- ppc_metrics_tbl %>% 
-    select(campaign, ctr, cpc, cvr) %>% 
+cost_per_lead_tbl <- ppc_metrics_tbl %>% 
+    select(campaign, ctr, cpc, ctl_cvr) %>% 
     mutate(clicks = budget / cpc) %>% 
-    mutate(leads = cvr * clicks) %>% 
+    mutate(leads = ctl_cvr * clicks) %>% 
     mutate(cpl = budget / leads)
 
 # - Cost Per Lead Function 
-get_cost_per_lead <- function(budget, data) {
+get_cost_per_lead <- function(data, budget) {
     
     # uses ppc metrics data
-    lead_acquisition_cost_tbl <- data %>% 
-        select(campaign, ctr, cpc, cvr) %>% 
+    cost_per_lead_tbl <- data %>% 
+        select(campaign, ctr, cpc, ctl_cvr) %>% 
         mutate(clicks = budget / cpc) %>% 
-        mutate(leads = cvr * clicks) %>% 
+        mutate(leads = ctl_cvr * clicks) %>% 
         mutate(cpl = budget / leads)
     
-    return(lead_acquisition_cost_tbl)
+    return(cost_per_lead_tbl)
     
 }
 
-get_cost_per_lead(1000, ppc_metrics_tbl)
+get_cost_per_lead(ppc_metrics_tbl, 1000)
+
+
+# *****************************************************************************
+# **** ----
+# FINAL OUTPUT ----
+# *****************************************************************************
+
+# - We want 1 final table with ppc metrics and cost per lead
+
+get_ppc_final_output <- function(data, budget = 1000, level = "campaign",
+                                 output = "cpl") {
+    
+    metrics <- get_ppc_metrics_table(data, level = "campaign") 
+        
+    cpl <- get_cost_per_lead(data = metrics, budget = budget)
+    
+    if (output == "cpl") {
+        ret <- cpl
+    } else {
+        ret <- metrics
+    }
+    
+    return(ret)
+    
+}
+
+get_ppc_final_output(data = ppc_tbl, output = "metrics")
 
 # Output:
 # get_ppc_metrics >> get_ppc_metrics_table >> get_cost_per_lead
@@ -222,17 +250,15 @@ dump(
     list = c(
         "get_ppc_metrics",
         "get_ppc_metrics_table",
-        "get_cost_per_lead"
+        "get_cost_per_lead",
+        "get_ppc_final_output"
     ),
     file = "../functions/ppc_functions.R",
     append = FALSE
 )
 
 
-# *****************************************************************************
-# **** ----
-# SECTION NAME ----
-# *****************************************************************************
+
 # *****************************************************************************
 # **** ----
 # SECTION NAME ----
