@@ -11,7 +11,7 @@ function(data) {
             values_to = "campaign"
         ) %>% 
         summarise(
-            count_of_customers = n(),
+            total_customers = n(),
             avg_days_to_purch  = mean(days_to_purchase, na.rm = TRUE),
             avg_1yr_revenue    = mean(total_1yr_purch_net, na.rm = TRUE),
             touch_points       = mean(touch_points, na.rm = TRUE),
@@ -35,7 +35,7 @@ function(data) {
                 level   = "campaign"
             )
         ) %>% 
-        mutate(customer_acq_cost = total_cost / count_of_customers) %>% 
+        mutate(customer_acq_cost = total_cost / total_customers) %>% 
         select(-total_cost) %>% 
         
         # lead to customer cvr
@@ -46,7 +46,7 @@ function(data) {
                 level  = "campaign"
             )
         ) %>% 
-        mutate(lead_cvr = count_of_customers / total_conversions) %>% 
+        mutate(lead_cvr = total_customers / total_conversions) %>% 
         select(-total_conversions)
     
     return(ret)
@@ -63,19 +63,12 @@ function(data, discount_rate, gross_margin) {
         mutate(gross_profit = avg_1yr_revenue * gross_margin) %>% 
         
         # customer retention rate
-        left_join(
-            repeat_customers_tbl %>% 
-                filter(repeat_purchase == "Repeat") %>% 
-                select(!repeat_purchase) %>% 
-                gather() %>% 
-                rename(customer_retention_rate = value),
-            by = c("campaign" = "key")
-        ) %>% 
+        left_join(get_customer_retention()) %>% 
         
         # clv gross
         mutate(
             clv_gross = gross_profit * (
-                customer_retention_rate / (1 + discount_rate - customer_retention_rate)
+                retention_rate / (1 + discount_rate - retention_rate)
             )
         ) %>% 
         
@@ -136,4 +129,29 @@ function(data, select_cols = NULL, unpivot_cols = NULL,
     }
     
     return(result_tbl)
+}
+get_customer_analysis_final_output <-
+function(data_leads, data_survey,
+                                               discount_rate = 0.10,
+                                               gross_margin = 0.75,
+                                               output = "customer_metrics") {
+    
+    cust_metrics_tbl <- get_customer_metrics(data = leads_tbl)
+    
+    cust_ret_tbl <- get_customer_retention()
+    
+    clv_tbl <- get_customer_lifetime_value(
+        customer_metrics_tbl, discount_rate, gross_margin
+    )
+    
+    if (output == "customer_metrics") {
+        ret <- cust_metrics_tbl
+    } else if (output == "customer_retention") {
+        ret <- cust_ret_tbl
+    } else if (output == "clv") {
+        ret <- clv_tbl
+    }
+    
+    return(ret)
+    
 }

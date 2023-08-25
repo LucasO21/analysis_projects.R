@@ -12,7 +12,7 @@
 #' - Perform NPS analysis.
 #' - Understand where our customers are coming from (first contact point).
 #' - Understand who are our loyal customers (customers who will re-purchase).
-#' Estimate our customer CLV.
+#' - Estimate our customer CLV.
 
 # *****************************************************************************
 # **** ----
@@ -171,7 +171,7 @@ get_customer_metrics <- function(data) {
     
 }
 
-get_customer_metrics(data = leads_tbl)
+customer_metrics_tbl <- get_customer_metrics(data = leads_tbl)
 
 
 # *****************************************************************************
@@ -282,24 +282,6 @@ nps_pct_tbl %>%
 # *****************************************************************************
 
 # * Survey Analysis ----
-survey_tbl %>% 
-    select(lead_source, hear_about) %>% 
-    mutate(total = "Total") %>% 
-    pivot_longer(
-        cols = -c(hear_about),
-        names_to = "name",
-        values_to = "campaign"
-    ) %>% 
-    count(campaign, hear_about) %>% 
-    mutate(pct = n/sum(n), .by = campaign) %>% 
-    select(-n) %>% 
-    pivot_wider(names_from = campaign, values_from = pct)
-
-
-#' - Observation:
-#' - Facebook is the best channel at word of mouth, given that it is a social network.
-#' - Adwords is better for online search
-
 
 # * Function ----
 # - Function to create pivot tables
@@ -362,6 +344,10 @@ first_contact_tbl <- get_pivot_table(
     return       = "percent"
 )
 
+#' - Observation:
+#' - Facebook is the best channel at word of mouth, given that it is a social network.
+#' - Adwords is better for online search
+
 
 # * Re - Purchase Table ----
 repeat_purchase_tbl <- get_pivot_table(
@@ -372,7 +358,7 @@ repeat_purchase_tbl <- get_pivot_table(
 )
 
 # * Repeat Customers ----
-repeat_customers_tbl <- repeat_purchase_tbl %>% 
+customer_retention_tbl <- repeat_purchase_tbl %>% 
     filter(repeat_purchase %in% c("Very likely", "Likely")) %>% 
     bind_rows(
         tibble(
@@ -383,7 +369,45 @@ repeat_customers_tbl <- repeat_purchase_tbl %>%
         )
     )
 
-repeat_purchase_tbl %>% write_rds("../data/data_clean/repeat_customers_data.rds")
+
+# ** Function (Repeat Customers) ----
+get_customer_retention <- function(output_total = TRUE) {
+    
+    repeat_purchase_tbl <- get_pivot_table(
+        data         = survey_tbl,
+        select_cols  = c(lead_source, repeat_purchase),
+        unpivot_cols = repeat_purchase,
+        return       = "percent"
+    )
+    
+    customer_retention_tbl <- repeat_purchase_tbl %>% 
+        filter(repeat_purchase %in% c("Very likely", "Likely")) %>% 
+        bind_rows(
+            tibble(
+                repeat_purchase = "Repeat",
+                AdWords         = sum(repeat_purchase_tbl[1:2, ]$AdWords),
+                Facebook        = sum(repeat_purchase_tbl[1:2, ]$Facebook),
+                Total           = sum(repeat_purchase_tbl[1:2, ]$Total),
+            )
+        )
+    
+    if (output_total) {
+        ret <- customer_retention_tbl %>% 
+            filter(repeat_purchase == "Repeat") %>% 
+            select(-repeat_purchase) %>% 
+            gather(key = "campaign", value = "retention_rate")
+        
+    } else {
+        ret <- customer_retention_tbl
+    }
+    
+    return(ret)
+    
+}
+
+customer_retention_tbl <- get_customer_retention()
+
+
 
 #' - Observation:
 #' - 62% of millennial said that if a brand engages with them on social networks,
@@ -446,19 +470,12 @@ get_customer_lifetime_value <- function(data, discount_rate, gross_margin) {
         mutate(gross_profit = avg_1yr_revenue * gross_margin) %>% 
         
         # customer retention rate
-        left_join(
-            repeat_customers_tbl %>% 
-                filter(repeat_purchase == "Repeat") %>% 
-                select(!repeat_purchase) %>% 
-                gather() %>% 
-                rename(customer_retention_rate = value),
-            by = c("campaign" = "key")
-        ) %>% 
+        left_join(get_customer_retention()) %>% 
         
         # clv gross
         mutate(
             clv_gross = gross_profit * (
-                customer_retention_rate / (1 + discount_rate - customer_retention_rate)
+                retention_rate / (1 + discount_rate - retention_rate)
             )
         ) %>% 
         
@@ -478,6 +495,44 @@ get_customer_lifetime_value(customer_metrics_tbl, 0.10, 0.75)
 #' - It is cheaper to gain leads organically than paid ads.
 #' - Tailor promotions to increase customer retention.
 #' - Continue to analyze ad data monthly. 
+
+
+# *****************************************************************************
+# **** ----
+# FINAL OUTPUT ----
+# *****************************************************************************
+get_customer_analysis_final_output <- function(data_leads, data_survey,
+                                               discount_rate = 0.10,
+                                               gross_margin = 0.75,
+                                               output = "customer_metrics") {
+    
+    # - output: customer_metrics, customer_retention, customer lifetime value
+    
+    cust_metrics_tbl <- get_customer_metrics(data = leads_tbl)
+    
+    cust_ret_tbl <- get_customer_retention()
+    
+    clv_tbl <- get_customer_lifetime_value(
+        customer_metrics_tbl, discount_rate, gross_margin
+    )
+    
+    if (output == "customer_metrics") {
+        ret <- cust_metrics_tbl
+    } else if (output == "customer_retention") {
+        ret <- cust_ret_tbl
+    } else if (output == "clv") {
+        ret <- clv_tbl
+    }
+    
+    return(ret)
+    
+}
+
+get_customer_analysis_final_output(
+    data_leads  = leads_tbl,
+    data_survey = survey_tbl,
+    output      = "clv"
+)
     
     
 
@@ -491,7 +546,8 @@ dump(
     list = c(
         "get_customer_metrics",
         "get_customer_lifetime_value",
-        "get_pivot_table"
+        "get_pivot_table",
+        "get_customer_analysis_final_output"
     ),
     file   = "../functions/customer_analysis_functions.R",
     append = FALSE
