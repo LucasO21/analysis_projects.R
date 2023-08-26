@@ -157,11 +157,12 @@ new_customer_per_spend_tbl %>% glimpse()
 # **** ----
 # CASH FLOW ASSUMPTIONS ----
 # *****************************************************************************
-new_customer_per_1000_tbl %>% glimpse()
+new_customer_per_spend_tbl %>% glimpse()
 
 #' - Here we'll be modeling with 2 scenarios for new ad campaigns;
 #' - In scenario 0, we will not take on any additional marketing cost.
 #' - In scenario 1, we'll hire a new marketing manager to manage campaign ads.
+#'   Thus, there will be certain additional marketing costs.
 
 
 # * Scenario Inputs ----
@@ -171,36 +172,36 @@ scenario                  <- 1 # hire new marketing manager
 marketing_manager_salary  <- 80000
 current_salary_allocation <- 0.20
 social_media_tools_cost   <- 250 # $250 per month
-channel_list <- c("AdWords", "Facebook", "Linkedin", "Spotify", "TikTok")
+ad_channel_list <- c("AdWords", "Facebook", "Linkedin", "Spotify", "TikTok")
 
 
 # ** Paid Customer Acquisition ----
-paid_assumptions_inputs_tbl <- tibble(
-    campaign            = channel_list,
-    monthly_ad_spend    = c(2000, 4000, 2000, 5000, 4000),
-    est_ctc_cvr_uplift  = c(0.02, 0.03, 0, 0, 0),
-    est_retention_rate_uplift = c(0.02, 0.03, 0.02, 0.02, 0.03)
+paid_ad_assumptions_inputs_tbl <- tibble(
+    campaign              = channel_list,
+    monthly_ad_spend      = c(2000, 4000, 2000, 5000, 4000),
+    ctc_cvr_uplift        = c(0.02, 0.03, 0, 0, 0),
+    retention_rate_uplift = c(0.02, 0.03, 0.02, 0.02, 0.03)
 )
 
 
-paid_assumptions_tbl <- new_customer_per_1000_tbl %>% 
+paid_ad_estimate_tbl <- new_customer_per_spend_tbl %>% 
     select(campaign, cpc, retention_rate, ctc_cvr) %>% 
-    left_join(paid_assumptions_inputs_tbl) %>% 
+    left_join(paid_ad_assumptions_inputs_tbl) %>% 
     
     # estimated clicks
-    mutate(est_clicks = monthly_ad_spend / cpc) %>% 
+    mutate(clicks = monthly_ad_spend / cpc) %>% 
     
     # estimated uplift in click to customer cvr based on scenario
-    mutate(est_new_ctc_cvr = case_when(
+    mutate(ctc_cvr = case_when(
         scenario == 0 ~ ctc_cvr,
-        TRUE          ~ ctc_cvr + est_ctc_cvr_uplift
+        TRUE          ~ ctc_cvr + ctc_cvr_uplift
     )) %>% 
     
     # estimated uplift in customer retention rate
-    mutate(est_new_customers = est_new_ctc_cvr * est_clicks) %>% 
-    mutate(est_new_retention_rate = case_when(
+    mutate(new_customers = ctc_cvr * clicks) %>% 
+    mutate(retention_rate = case_when(
         scenario == 0 ~ retention_rate,
-        TRUE          ~ retention_rate + est_retention_rate_uplift
+        TRUE          ~ retention_rate + retention_rate_uplift
     )) 
     
 
@@ -215,23 +216,27 @@ organic_assumption_inputs_tbl <- tibble(
     retention_rate  = c(0.73, 0.73, 0.73)
 )
 
-organic_assumptions_tbl <- organic_assumption_inputs_tbl %>% 
+organic_estimates_tbl <- organic_assumption_inputs_tbl %>% 
     mutate(growth = case_when(
         scenario == 0 ~ growth_no_mgr,
         TRUE          ~ growth_no_mgr + growth_with_mgr
     ))
     
 
-# ** 1 YR Purchase & Retention ----
-purchase_retention_tbl <- new_channels_clv_estimate_tbl %>% 
+# ** Inputs For Projections ----
+purchase_retention_tbl <- clv_estimate_new_ad_channels_tbl %>% 
+    
+    # inputs needed for paid channels
     select(campaign, avg_1yr_revenue) %>% 
     left_join(
-        paid_assumptions_tbl %>% 
-            select(campaign, est_new_retention_rate) %>% 
-            rename(retention_rate = est_new_retention_rate)
+        paid_ad_estimate_tbl %>% 
+            select(campaign, retention_rate, new_customers) 
     ) %>% 
+    
+    
+    # inputs needed for organic channels
     bind_rows(
-        organic_assumptions_tbl %>% 
+        organic_estimates_tbl %>% 
             select(campaign, avg_1yr_revenue, retention_rate)
     )
   
