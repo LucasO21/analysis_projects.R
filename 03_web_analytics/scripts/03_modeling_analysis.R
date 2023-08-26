@@ -102,10 +102,7 @@ new_ad_channels_tbl <- tibble(
 # - Estimate clv for these new platforms based on assumptions above.
 
 # CLV Estimates ----
-gross_margin  <- 0.75
-discount_rate <- 0.10
-
-new_channels_clv_estimate_tbl <- ppc_metrics_tbl %>% 
+clv_estimate_new_ad_channels_tbl <- ppc_metrics_tbl %>% 
     select(campaign, total_clicks, total_leads, total_cost) %>% 
     left_join(
         customer_metrics_tbl %>% 
@@ -148,12 +145,12 @@ new_channels_clv_estimate_tbl <- ppc_metrics_tbl %>%
 
 budget <- 1000
 
-new_customer_per_1000_tbl <- new_channels_clv_estimate_tbl %>% 
+new_customer_per_spend_tbl <- clv_estimate_new_ad_channels_tbl %>% 
     mutate(cpc = total_cost / total_clicks) %>% 
     mutate(est_clicks = budget / cpc) %>% 
     mutate(est_customers = ctc_cvr * est_clicks)
 
-new_customer_per_1000_tbl %>% glimpse()
+new_customer_per_spend_tbl %>% glimpse()
 
 
 # *****************************************************************************
@@ -239,21 +236,146 @@ purchase_retention_tbl <- new_channels_clv_estimate_tbl %>%
     )
   
 
-
-    
-
-
-
-
-
-
-
-
-
 # *****************************************************************************
 # **** ----
-# DATA IMPORT ----
+# ESTIMATE: SOCIAL MEDIA FOLLOWERS ----
 # *****************************************************************************
+
+# * Create Dates ----
+
+# - Create a sequence of months from Jan 2023 to Dec 2023
+months_list <- seq(from = ymd("2023-01-01"), to = ymd("2024-12-01"), by = "months")
+
+# - Calculate the last day of each month
+last_days <- months_list %>% 
+    floor_date("month") %>% 
+    ceiling_date("month") - days(1)
+
+dates_tbl <- tibble(report_month = last_days)
+
+get_projection_dates <- function(start_date, end_date, by = "months") {
+    
+    months_list <- seq(
+        from = ymd(start_date), 
+        to   = ymd(end_date), 
+        by   = by
+    )
+    
+    # - Calculate the last day of each month
+    last_days <- months_list %>% 
+        floor_date("month") %>% 
+        ceiling_date("month") - days(1)
+    
+    dates_tbl <- tibble(report_month = last_days)
+    
+    return(dates_tbl)
+    
+}
+
+projection_dates_tbl <- get_projection_dates("2023-01-01", "2024-12-01")
+
+
+# * Functions ----
+get_campaign_growth <- function(name, initial_value, growth_rate, n = 23) {
+    
+    ret <- tibble({{name}}:= initial_value * (1 + growth_rate)^ (0:n)) 
+    
+    return(ret)
+}
+
+
+bind_cols(
+    projection_dates_tbl,
+    
+    # facebook organic
+    get_campaign_growth(
+        name          = "facebook_organic",
+        initial_value = organic_assumptions_tbl$followers[1],
+        growth_rate   = organic_assumptions_tbl$growth[1]
+    ),
+    
+    # linkedin organic
+    get_campaign_growth(
+        name          = "linkedin_organic",
+        initial_value = organic_assumptions_tbl$followers[2],
+        growth_rate   = organic_assumptions_tbl$growth[2]
+    ),
+    
+    # twitter organic
+    get_campaign_growth(
+        name          = "twitter_organic",
+        initial_value = organic_assumptions_tbl$followers[3],
+        growth_rate   = organic_assumptions_tbl$growth[3]
+    )
+    
+)
+
+
+# * Social Media Revenue & Customers ----
+new_customer_per_1000_tbl %>% glimpse()
+new_channels_clv_estimate_tbl %>% glimpse()
+paid_assumptions_tbl
+
+# ** Churn Start Month
+churn_start_month <- as.Date("2024-02-29")
+
+
+new_customers <- round(
+    subset(paid_assumptions_tbl, grepl("AdWords", campaign))$est_new_customers, 
+    digits = 0
+)
+
+retention_rate <- subset(
+    purchase_retention_tbl, grepl("AdWords", campaign)
+)$retention_rate
+
+avg_1yr_revenue <- subset(
+    purchase_retention_tbl, grepl("AdWords", campaign)
+)$avg_1yr_revenue
+    
+projection_dates_tbl %>% 
+    bind_cols(tibble(adwords = c(NA, rep(new_customers, 23)))) %>% 
+    mutate(churn = lag(adwords, 12)) %>% 
+    mutate(churn = case_when(
+        is.na(churn) ~ 0,
+        TRUE         ~ -round((churn * (1 - retention_rate)), 0)
+    )) %>% 
+    mutate(
+        total_customers = cumsum(
+            ifelse(is.na(adwords + churn), 0, adwords + churn)
+        )
+    ) %>% 
+    mutate(revenue = (avg_1yr_revenue / 12) * total_customers) %>% 
+
+    
+    print(n = 50)
+
+churn_start_month <- 12
+data_inputs       <- purchase_retention_tbl
+data_dates        <- projection_dates_tbl
+data_customers    <- paid_assumptions_tbl
+campaign_name     <- "AdWords"
+
+get_campaign_projections <- function(data_dates, data_inputs,  campaign_name, 
+                                     churn_start_month = 12) {
+    
+    # rlang setup
+    campaign_expr <- rlang::sym(campaign)
+    
+    # inputs setup
+    new_customers <- round(
+        subset(data_inputs, grepl(campaign_name, campaign))$est_new_customers, 
+        digits = 0
+    )
+    
+    
+}
+
+
+
+
+
+
 
 # *****************************************************************************
 # **** ----
