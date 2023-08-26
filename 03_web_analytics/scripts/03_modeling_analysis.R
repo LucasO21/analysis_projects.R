@@ -22,7 +22,7 @@
 # *****************************************************************************
 
 # * Set Working Dir ----
-setwd(here::here("web_analytics", "scripts"))
+setwd(here::here("03_web_analytics", "scripts"))
 
 # * Libraries ----
 library(tidyverse)
