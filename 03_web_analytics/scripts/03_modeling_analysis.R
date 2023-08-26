@@ -206,7 +206,39 @@ paid_assumptions_tbl <- new_customer_per_1000_tbl %>%
         TRUE          ~ retention_rate + est_retention_rate_uplift
     )) 
     
+
+# ** Organic Customer Acquisition ----
+organic_assumption_inputs_tbl <- tibble(
+    campaign        = c("Facebook Organic", "Linkedin Organic", "Twitter Organic"),
+    followers       = c(2538, 528, 190),
+    growth_no_mgr   = c(0.01, 0.01, 0.01),
+    growth_with_mgr = c(0.08, 0.08, 0.08),
+    new_flwr_cvr    = c(0.08, 0.08, 0.05),
+    avg_1yr_revenue = c(335, 335, 330),
+    retention_rate  = c(0.73, 0.73, 0.73)
+)
+
+organic_assumptions_tbl <- organic_assumption_inputs_tbl %>% 
+    mutate(growth = case_when(
+        scenario == 0 ~ growth_no_mgr,
+        TRUE          ~ growth_no_mgr + growth_with_mgr
+    ))
     
+
+# ** 1 YR Purchase & Retention ----
+purchase_retention_tbl <- new_channels_clv_estimate_tbl %>% 
+    select(campaign, avg_1yr_revenue) %>% 
+    left_join(
+        paid_assumptions_tbl %>% 
+            select(campaign, est_new_retention_rate) %>% 
+            rename(retention_rate = est_new_retention_rate)
+    ) %>% 
+    bind_rows(
+        organic_assumptions_tbl %>% 
+            select(campaign, avg_1yr_revenue, retention_rate)
+    )
+  
+
 
     
 
