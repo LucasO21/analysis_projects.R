@@ -224,7 +224,7 @@ organic_estimates_tbl <- organic_assumption_inputs_tbl %>%
     
 
 # ** Inputs For Projections ----
-purchase_retention_tbl <- clv_estimate_new_ad_channels_tbl %>% 
+projection_inputs_tbl <- clv_estimate_new_ad_channels_tbl %>% 
     
     # inputs needed for paid channels
     select(campaign, avg_1yr_revenue) %>% 
@@ -238,28 +238,22 @@ purchase_retention_tbl <- clv_estimate_new_ad_channels_tbl %>%
     bind_rows(
         organic_estimates_tbl %>% 
             select(campaign, avg_1yr_revenue, retention_rate)
+    ) %>% 
+    left_join(
+        organic_estimates_tbl %>% 
+            select(campaign, followers, growth)
     )
   
 
 # *****************************************************************************
 # **** ----
-# ESTIMATE: SOCIAL MEDIA FOLLOWERS ----
+# PROJECTION ESTIMATE: SOCIAL MEDIA FOLLOWERS ----
 # *****************************************************************************
 
-# * Create Dates ----
-
-# - Create a sequence of months from Jan 2023 to Dec 2023
-months_list <- seq(from = ymd("2023-01-01"), to = ymd("2024-12-01"), by = "months")
-
-# - Calculate the last day of each month
-last_days <- months_list %>% 
-    floor_date("month") %>% 
-    ceiling_date("month") - days(1)
-
-dates_tbl <- tibble(report_month = last_days)
-
+# * Create Projection Dates ----
 get_projection_dates <- function(start_date, end_date, by = "months") {
     
+    # list of months to project
     months_list <- seq(
         from = ymd(start_date), 
         to   = ymd(end_date), 
@@ -280,37 +274,39 @@ get_projection_dates <- function(start_date, end_date, by = "months") {
 projection_dates_tbl <- get_projection_dates("2023-01-01", "2024-12-01")
 
 
-# * Functions ----
-get_campaign_growth <- function(name, initial_value, growth_rate, n = 23) {
+# * Social Media Follower Estimates ----
+get_social_media_followers <- function(data_inputs, campaign_name, n = 23) {
     
-    ret <- tibble({{name}}:= initial_value * (1 + growth_rate)^ (0:n)) 
+    pattern <- campaign_name %>% str_replace("_", " ") %>% str_to_title()
+    
+    initial_value <- subset(data_inputs, grepl(pattern, campaign))$followers
+    
+    growth <- subset(data_inputs, grepl(pattern, campaign))$growth
+    
+    ret <- tibble({{campaign_name}}:= initial_value * (1 + growth)^ (0:n)) 
     
     return(ret)
 }
 
-
-bind_cols(
+social_media_followers_tbl <- bind_cols(
     projection_dates_tbl,
     
     # facebook organic
-    get_campaign_growth(
-        name          = "facebook_organic",
-        initial_value = organic_assumptions_tbl$followers[1],
-        growth_rate   = organic_assumptions_tbl$growth[1]
+    get_social_media_followers(
+        data_inputs   = projection_inputs_tbl,
+        campaign_name = "facebook_organic"
     ),
     
     # linkedin organic
-    get_campaign_growth(
-        name          = "linkedin_organic",
-        initial_value = organic_assumptions_tbl$followers[2],
-        growth_rate   = organic_assumptions_tbl$growth[2]
+    get_social_media_followers(
+        data_inputs   = projection_inputs_tbl,
+        campaign_name = "linkedin_organic"
     ),
     
     # twitter organic
-    get_campaign_growth(
-        name          = "twitter_organic",
-        initial_value = organic_assumptions_tbl$followers[3],
-        growth_rate   = organic_assumptions_tbl$growth[3]
+    get_social_media_followers(
+        data_inputs   = projection_inputs_tbl,
+        campaign_name = "twitter_organic"
     )
     
 )
