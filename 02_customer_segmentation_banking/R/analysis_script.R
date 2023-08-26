@@ -8,7 +8,7 @@
 # *************************************************************************
 
 # 1.1 Set Working Dir ----
-setwd(here::here("customer_segmentation_banking", "R"))
+setwd(here::here("02_customer_segmentation_banking", "R"))
 
 # 1.2 Libraries ----
 library(tidyverse)

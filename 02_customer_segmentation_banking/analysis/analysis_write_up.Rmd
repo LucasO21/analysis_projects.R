@@ -22,7 +22,7 @@ knitr::opts_chunk$set(echo = TRUE, dpi = 300)
 # Data Import
 
 # * Set Working Dir ----
-setwd(here::here("customer_segmentation_banking", "analysis"))
+setwd(here::here("02_customer_segmentation_banking", "analysis"))
 
 # * Libraries ----
 library(tidyverse)
