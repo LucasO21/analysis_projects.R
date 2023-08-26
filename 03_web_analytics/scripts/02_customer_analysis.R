@@ -546,6 +546,7 @@ dump(
     list = c(
         "get_customer_metrics",
         "get_customer_lifetime_value",
+        "get_customer_retention",
         "get_pivot_table",
         "get_customer_analysis_final_output"
     ),

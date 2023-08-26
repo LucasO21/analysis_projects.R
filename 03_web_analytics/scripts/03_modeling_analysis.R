@@ -72,6 +72,14 @@ customer_retention_tbl <- get_customer_analysis_final_output(
     output      = "customer_retention"
 )
 
+# * CLV Inputs Table ----
+clv_estimate_inputs_tbl <- customer_metrics_tbl %>% 
+    left_join(customer_retention_tbl) %>% 
+    left_join(
+        ppc_metrics_tbl %>% 
+            select(campaign, total_clicks, total_leads, total_cost)
+    )
+
 
 # *****************************************************************************
 # **** ----
@@ -83,14 +91,45 @@ customer_retention_tbl <- get_customer_analysis_final_output(
 #   create ad campaigns for those platforms.
 
 # * New Ad Channels Data ----
-new_ad_channels_tbl <- tibble(
-    campaign        = c("Linkedin", "Spotify", "TikTok"),
-    total_clicks    = c(800, 100000, 4000),
-    total_leads     = c(75, 1500, 150),
-    total_cost      = c(6000, 17000, 6000),
-    total_customers = c(0.40 * 75, 0.28 * 1500, 0.28 * 500),
-    avg_1yr_revenue = c(335, 330, 335),
-    retention_rate  = c(0.70, 0.62, 0.68)
+# new_ad_channels_tbl <- tibble(
+#     campaign        = c("Linkedin", "Spotify", "TikTok"),
+#     total_clicks    = c(800, 100000, 4000),
+#     total_leads     = c(75, 1500, 150),
+#     total_cost      = c(6000, 17000, 6000),
+#     total_customers = c(0.40 * 75, 0.28 * 1500, 0.28 * 500),
+#     avg_1yr_revenue = c(335, 330, 335),
+#     retention_rate  = c(0.70, 0.62, 0.68)
+# )
+
+get_paid_assumptions <- function(paid_campaigns,
+                                 paid_clicks,
+                                 paid_leads,
+                                 paid_cost,
+                                 paid_customers,
+                                 paid_revenue,
+                                 paid_retention) {
+    
+    ret <- tibble(
+        campaign        = paid_campaigns,
+        total_clicks    = paid_clicks,
+        total_leads     = paid_leads,
+        total_cost      = paid_cost,
+        total_customers = paid_customers,
+        avg_1yr_revenue = paid_revenue,
+        retention_rate  = paid_retention
+    )
+    
+    return(ret)
+}
+
+paid_assumptions_tbl <- get_paid_assumptions(
+    paid_campaign  = c("Linkedin", "Spotify", "TikTok"),
+    paid_clicks    = c(800, 100000, 4000),
+    paid_leads     = c(75, 1500, 150),
+    paid_cost      = c(6000, 17000, 6000),
+    paid_customers = c(0.40 * 75, 0.28 * 1500, 0.28 * 500),
+    paid_revenue   = c(335, 330, 335),
+    paid_retention = c(0.70, 0.62, 0.68)
 )
 
 
@@ -129,6 +168,52 @@ clv_estimate_new_ad_channels_tbl <- ppc_metrics_tbl %>%
         )) %>% 
     mutate(clv_net = clv_gross - cac)
 
+data_clv_estimates <- clv_estimate_inputs_tbl
+data_paid_assumptions <- paid_assumptions_tbl
+
+get_paid_clv_estimates <- function(data_clv_estimates, data_paid_assumptions,
+                                   budget = 1000) {
+    
+    # data = clv estimates input table
+    
+    ret1 <- data_clv_estimates %>% 
+        select(campaign, total_clicks, total_leads, total_cost, total_customers,
+               avg_1yr_revenue, retention_rate) %>% 
+        
+        # remove total row
+        filter(campaign != "Total") %>% 
+        
+        # bind rows with new ad channels data
+        bind_rows(data_paid_assumptions) %>% 
+        
+        # lead conversion rate
+        mutate(ctc_cvr = total_customers / total_clicks) %>% 
+        
+        # cac
+        mutate(cac = total_cost / total_customers) %>% 
+        
+        # clv estimates
+        mutate(gross_profit = avg_1yr_revenue * gross_margin) %>% 
+        mutate(clv_gross = gross_profit * (
+            retention_rate / (1 + discount_rate - retention_rate)
+        )) %>% 
+        mutate(clv_net = clv_gross - cac)
+    
+    # cost per $1000 spend
+    ret2 <- ret1 %>% 
+        mutate(cpc = total_cost / total_clicks) %>% 
+        mutate(est_clicks = budget / cpc) %>% 
+        mutate(est_customers = ctc_cvr * est_clicks)
+    
+    return(ret2)
+    
+}
+
+clv_estimate_paid_tbl <- get_paid_clv_estimates(
+    data_clv_estimates    = clv_estimate_inputs_tbl,
+    data_paid_assumptions = paid_assumptions_tbl
+)
+
 
 # - Observation:
 # - We might as well advertise on these platforms since we will potentially make
@@ -145,7 +230,7 @@ clv_estimate_new_ad_channels_tbl <- ppc_metrics_tbl %>%
 
 budget <- 1000
 
-new_customer_per_spend_tbl <- clv_estimate_new_ad_channels_tbl %>% 
+new_customer_per_spend_tbl <- clv_estimate_new_paid_channels_tbl %>% 
     mutate(cpc = total_cost / total_clicks) %>% 
     mutate(est_clicks = budget / cpc) %>% 
     mutate(est_customers = ctc_cvr * est_clicks)
@@ -176,7 +261,7 @@ ad_channel_list <- c("AdWords", "Facebook", "Linkedin", "Spotify", "TikTok")
 
 
 # ** Paid Customer Acquisition ----
-paid_ad_assumptions_inputs_tbl <- tibble(
+paid_assumptions_up <- tibble(
     campaign              = channel_list,
     monthly_ad_spend      = c(2000, 4000, 2000, 5000, 4000),
     ctc_cvr_uplift        = c(0.02, 0.03, 0, 0, 0),
@@ -203,7 +288,67 @@ paid_ad_estimate_tbl <- new_customer_per_spend_tbl %>%
         scenario == 0 ~ retention_rate,
         TRUE          ~ retention_rate + retention_rate_uplift
     )) 
+
+paid_campaign_list   = channel_list
+paid_monthly_spend   = c(2000, 4000, 2000, 5000, 4000)
+paid_uplift_ctc_cvr  = c(0.02, 0.03, 0, 0, 0)
+paid_uplift_ret_rate = c(0.02, 0.03, 0.02, 0.02, 0.03)
+
+get_paid_uplift_estimates <- function(data,
+                                      scenario = 1,
+                                      marketing_manager_salary = 80000,
+                                      marketing_manager_salary_allocation = 0.20,
+                                      social_media_tools_cost = 250,
+                                      paid_campaign_list = NULL,
+                                      paid_monthly_spend = NULL,
+                                      paid_uplift_ctc_cvr = NULL,
+                                      paid_uplift_ret_rate = NULL
+                                      ) {
     
+    # data = clv estimate for new paid
+    
+    # paid estimates ad spend and uplift
+    paid_assumptions_uplift_tbl <- tibble(
+        campaign         = paid_campaign_list,
+        monthly_ad_spend = paid_monthly_spend,
+        ctc_cvr_uplift   = paid_uplift_ctc_cvr,
+        ret_rate_uplift  = paid_uplift_ret_rate
+    )
+    
+    # paid new customer estimates
+    paid_ad_estimate_tbl <- data %>%
+        select(campaign, cpc, retention_rate, ctc_cvr) %>%
+        left_join(paid_assumptions_uplift_tbl) %>%
+
+        # estimated clicks
+        mutate(clicks = monthly_ad_spend / cpc) %>%
+
+        # estimated uplift in click to customer cvr based on scenario
+        mutate(ctc_cvr = case_when(
+            scenario == 0 ~ ctc_cvr,
+            TRUE          ~ ctc_cvr + ctc_cvr_uplift
+        )) %>%
+
+        # estimated uplift in customer retention rate
+        mutate(new_customers = ctc_cvr * clicks) %>%
+        mutate(retention_rate = case_when(
+            scenario == 0 ~ retention_rate,
+            TRUE          ~ retention_rate + ret_rate_uplift
+        ))
+    
+    return(paid_ad_estimate_tbl)
+    
+}
+
+paid_uplift_estimate_tbl <- get_paid_uplift_estimates(
+    data = clv_estimate_new_paid_channels_tbl,
+    paid_campaign_list   = c("AdWords", "Facebook", "Linkedin", "Spotify", "TikTok"),
+    paid_monthly_spend   = c(2000, 4000, 2000, 5000, 4000),
+    paid_uplift_ctc_cvr  = c(0.02, 0.03, 0, 0, 0),
+    paid_uplift_ret_rate = c(0.02, 0.03, 0.02, 0.02, 0.03)
+    
+)
+
 
 # ** Organic Customer Acquisition ----
 organic_assumption_inputs_tbl <- tibble(
@@ -313,61 +458,32 @@ social_media_followers_tbl <- bind_cols(
 
 
 # * Social Media Revenue & Customers ----
-new_customer_per_1000_tbl %>% glimpse()
-new_channels_clv_estimate_tbl %>% glimpse()
-paid_assumptions_tbl
 
-# ** Churn Start Month
-churn_start_month <- as.Date("2024-02-29")
-
-
-new_customers <- round(
-    subset(paid_assumptions_tbl, grepl("AdWords", campaign))$est_new_customers, 
-    digits = 0
-)
-
-retention_rate <- subset(
-    purchase_retention_tbl, grepl("AdWords", campaign)
-)$retention_rate
-
-avg_1yr_revenue <- subset(
-    purchase_retention_tbl, grepl("AdWords", campaign)
-)$avg_1yr_revenue
+# - Function: Get Projection Input Value
+get_projection_input <- function(data = projection_inputs_tbl, campaign_name,
+                                 input, digits = 0) {
     
-projection_dates_tbl %>% 
-    bind_cols(tibble(adwords = c(NA, rep(new_customers, 23)))) %>% 
-    mutate(churn = lag(adwords, 12)) %>% 
-    mutate(churn = case_when(
-        is.na(churn) ~ 0,
-        TRUE         ~ -round((churn * (1 - retention_rate)), 0)
-    )) %>% 
-    mutate(
-        total_customers = cumsum(
-            ifelse(is.na(adwords + churn), 0, adwords + churn)
-        )
-    ) %>% 
-    mutate(revenue = (avg_1yr_revenue / 12) * total_customers) %>% 
-
+    ret <- data %>% 
+        filter(campaign == campaign_name) %>% 
+        pull({{input}}) %>% 
+        round(digits = digits)
     
-    print(n = 50)
+    return(ret)
+}
 
-churn_start_month <- 12
-data_inputs       <- projection_inputs_tbl
-data_dates        <- projection_dates_tbl
-campaign_name     <- "Facebook"
-campaign_name <- "AdWords"
+get_projection_input(campaign_name = "Facebook", input = new_customers)
 
-subset(projection_inputs_tbl, campaign == "Facebook")$new_customers
-
-get_ad_campaign_revenue_projections <- function(
-        data_dates = projection_dates_tbl, 
-        data_inputs = projection_inputs_tbl,  
-        campaign_name, 
-        churn_start_month = 12
-    ) {
+# - Function: Get Customer & Revenue Projections
+get_projection_paid_customers_and_revenue <- function(campaign_name, 
+                                                      churn_month = 12,
+                                                      start_date  = "2023-01-01",
+                                                      end_date    = "2024-12-31",
+                                                      by          = "months",
+                                                      input,
+                                                      digits       = 0) {
     
-    # rlang setup
-    # campaign_expr <- rlang::sym(campaign)
+    # date projections tbl
+    dates <- get_projection_dates(start_date, end_date, by)
     
     # campaign name setup
     name <- campaign_name %>% str_replace(" ", "_") %>% str_to_lower()
@@ -377,6 +493,8 @@ get_ad_campaign_revenue_projections <- function(
         subset(data_inputs, campaign == campaign_name)$new_customers, 
         digits = 0
     )
+    
+    input_customers <- get_projection_input(campaign_name = campaign_name, input = new_customers)
     
     retention_rate <- round(
         subset(data_inputs, campaign == campaign_name)$retention_rate,

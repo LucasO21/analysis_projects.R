@@ -79,6 +79,40 @@ function(data, discount_rate, gross_margin) {
     
     
 }
+get_customer_retention <-
+function(output_total = TRUE) {
+    
+    repeat_purchase_tbl <- get_pivot_table(
+        data         = survey_tbl,
+        select_cols  = c(lead_source, repeat_purchase),
+        unpivot_cols = repeat_purchase,
+        return       = "percent"
+    )
+    
+    customer_retention_tbl <- repeat_purchase_tbl %>% 
+        filter(repeat_purchase %in% c("Very likely", "Likely")) %>% 
+        bind_rows(
+            tibble(
+                repeat_purchase = "Repeat",
+                AdWords         = sum(repeat_purchase_tbl[1:2, ]$AdWords),
+                Facebook        = sum(repeat_purchase_tbl[1:2, ]$Facebook),
+                Total           = sum(repeat_purchase_tbl[1:2, ]$Total),
+            )
+        )
+    
+    if (output_total) {
+        ret <- customer_retention_tbl %>% 
+            filter(repeat_purchase == "Repeat") %>% 
+            select(-repeat_purchase) %>% 
+            gather(key = "campaign", value = "retention_rate")
+        
+    } else {
+        ret <- customer_retention_tbl
+    }
+    
+    return(ret)
+    
+}
 get_pivot_table <-
 function(data, select_cols = NULL, unpivot_cols = NULL,
                             group_cols = NULL, return = "volume", format = FALSE) {
@@ -135,6 +169,8 @@ function(data_leads, data_survey,
                                                discount_rate = 0.10,
                                                gross_margin = 0.75,
                                                output = "customer_metrics") {
+    
+    # - output: customer_metrics, customer_retention, customer lifetime value
     
     cust_metrics_tbl <- get_customer_metrics(data = leads_tbl)
     
