@@ -352,28 +352,75 @@ projection_dates_tbl %>%
     print(n = 50)
 
 churn_start_month <- 12
-data_inputs       <- purchase_retention_tbl
+data_inputs       <- projection_inputs_tbl
 data_dates        <- projection_dates_tbl
-data_customers    <- paid_assumptions_tbl
-campaign_name     <- "AdWords"
+campaign_name     <- "Facebook"
+campaign_name <- "AdWords"
 
-get_campaign_projections <- function(data_dates, data_inputs,  campaign_name, 
-                                     churn_start_month = 12) {
+subset(projection_inputs_tbl, campaign == "Facebook")$new_customers
+
+get_ad_campaign_revenue_projections <- function(
+        data_dates = projection_dates_tbl, 
+        data_inputs = projection_inputs_tbl,  
+        campaign_name, 
+        churn_start_month = 12
+    ) {
     
     # rlang setup
-    campaign_expr <- rlang::sym(campaign)
+    # campaign_expr <- rlang::sym(campaign)
+    
+    # campaign name setup
+    name <- campaign_name %>% str_replace(" ", "_") %>% str_to_lower()
     
     # inputs setup
     new_customers <- round(
-        subset(data_inputs, grepl(campaign_name, campaign))$est_new_customers, 
+        subset(data_inputs, campaign == campaign_name)$new_customers, 
         digits = 0
     )
     
+    retention_rate <- round(
+        subset(data_inputs, campaign == campaign_name)$retention_rate,
+        digits = 2
+    )
+    
+    avg_1yr_revenue <- round(
+        subset(data_inputs, campaign == campaign_name)$avg_1yr_revenue,
+        digits = 0
+    )
+    
+    # revenue projection
+    revenue_projection_tbl <- data_dates %>% 
+        bind_cols(tibble(new_customers = c(NA, rep(new_customers, 23)))) %>% 
+        mutate(churn = lag(new_customers, 12)) %>% 
+        mutate(churn = case_when(
+            is.na(churn) ~ 0,
+            TRUE         ~ -round((churn * (1 - retention_rate)), 0)
+        )) %>% 
+        mutate(
+            total_customers = cumsum(
+                ifelse(is.na(new_customers + churn), 0, new_customers + churn)
+            )
+        ) %>% 
+        mutate(revenue = (avg_1yr_revenue / 12) * total_customers) %>% 
+        mutate(new_customers = ifelse(is.na(new_customers), 0, new_customers)) %>% 
+        mutate(campaign_name:= {{name}})
+    
+    # return
+    return(revenue_projection_tbl)
     
 }
 
+get_ad_campaign_revenue_projections(campaign_name = "Facebook")
 
 
+ad_channel_list %>% 
+    map(.f = function(list) {
+        get_ad_campaign_revenue_projections(
+            data_dates    = projection_dates_tbl,
+            data_inputs   = projection_inputs_tbl,
+            campaign_name = list
+        )
+    })
 
 
 
