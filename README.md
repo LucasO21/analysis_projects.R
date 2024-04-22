@@ -13,7 +13,6 @@ not committed to this repo to avoid push conflicts due to large files.
 
 1. [01_starbucks_ingredients_analysis](https://github.com/LucasO21/analysis_projects.R/tree/master/01_starbucks_ingredients_analysis)
 2. [02_customer_segmentation_banking](https://github.com/LucasO21/analysis_projects.R/tree/master/02_customer_segmentation_banking)
-2. [03_web_analytics](https://github.com/LucasO21/analysis_projects.R/tree/master/web_analytics)
 
 ## Project Descriptions
 
