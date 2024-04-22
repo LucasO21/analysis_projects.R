@@ -37,9 +37,4 @@ detailed analysis write up [here]().
 - `R script`  <span style="color:green">[✓]</span>
 - `Analysis Write Up` <span style="color:green">[✓]</span>
 
-### Project 3: web_analytics (WIP)
 
-The project explores marketing analytics. Currently a WIP.
-
-- `R script`  <span style="color:green">[✓]</span>
-- `Analysis Write Up` <span style="color:green">[✓]</span>
