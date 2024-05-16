@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Lucas Okwudishu">
+<meta name="dcterms.date" content="2024-05-11">
+
+<title>CRM Data Analysis</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="crm_data_analysis_writeup_files/libs/clipboard/clipboard.min.js"></script>
+<script src="crm_data_analysis_writeup_files/libs/quarto-html/quarto.js"></script>
+<script src="crm_data_analysis_writeup_files/libs/quarto-html/popper.min.js"></script>
+<script src="crm_data_analysis_writeup_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="crm_data_analysis_writeup_files/libs/quarto-html/anchor.min.js"></script>
+<link href="crm_data_analysis_writeup_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="crm_data_analysis_writeup_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="crm_data_analysis_writeup_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="crm_data_analysis_writeup_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="crm_data_analysis_writeup_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body>
+
+<header id="title-block-header" class="quarto-title-block default page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <div class="quarto-title-block"><div><h1 class="title">CRM Data Analysis</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+            <p class="subtitle lead">TBD</p>
+                                <div class="quarto-categories">
+                <div class="quarto-category">customer segmentation</div>
+              </div>
+                  </div>
+  </div>
+    
+  
+  <div class="quarto-title-meta">
+
+      <div>
+      <div class="quarto-title-meta-heading">Author</div>
+      <div class="quarto-title-meta-contents">
+               <p>Lucas Okwudishu </p>
+            </div>
+    </div>
+      
+      <div>
+      <div class="quarto-title-meta-heading">Published</div>
+      <div class="quarto-title-meta-contents">
+        <p class="date">05/11/2024</p>
+      </div>
+    </div>
+    
+      
+    </div>
+    
+  
+  </header><div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul class="collapse">
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction"><strong>Introduction</strong></a>
+  <ul class="collapse">
+  <li><a href="#what-is-a-crm-data" id="toc-what-is-a-crm-data" class="nav-link" data-scroll-target="#what-is-a-crm-data"><strong>What is a CRM Data?</strong></a></li>
+  <li><a href="#the-scenario" id="toc-the-scenario" class="nav-link" data-scroll-target="#the-scenario"><strong>The Scenario</strong></a></li>
+  </ul></li>
+  <li><a href="#data-overview" id="toc-data-overview" class="nav-link" data-scroll-target="#data-overview"><strong>Data Overview</strong></a></li>
+  <li><a href="#customer-segmentation" id="toc-customer-segmentation" class="nav-link" data-scroll-target="#customer-segmentation"><strong>Customer Segmentation</strong></a>
+  <ul class="collapse">
+  <li><a href="#customer-segmentation-analysis" id="toc-customer-segmentation-analysis" class="nav-link" data-scroll-target="#customer-segmentation-analysis"><strong>Customer Segmentation Analysis</strong></a></li>
+  </ul></li>
+  <li><a href="#key-metrics" id="toc-key-metrics" class="nav-link" data-scroll-target="#key-metrics"><strong>Key Metrics</strong></a></li>
+  <li><a href="#analysis-of-key-metrics" id="toc-analysis-of-key-metrics" class="nav-link" data-scroll-target="#analysis-of-key-metrics"><strong>Analysis of Key Metrics</strong></a>
+  <ul class="collapse">
+  <li><a href="#average-time-to-close" id="toc-average-time-to-close" class="nav-link" data-scroll-target="#average-time-to-close"><strong>Average Time to Close</strong></a></li>
+  <li><a href="#deal-close-rate-average-deal-value" id="toc-deal-close-rate-average-deal-value" class="nav-link" data-scroll-target="#deal-close-rate-average-deal-value"><strong>Deal Close Rate &amp; Average Deal Value</strong></a></li>
+  </ul></li>
+  <li><a href="#analysis-of-key-metrics-by-trend" id="toc-analysis-of-key-metrics-by-trend" class="nav-link" data-scroll-target="#analysis-of-key-metrics-by-trend"><strong>Analysis of Key Metrics by Trend</strong></a>
+  <ul class="collapse">
+  <li><a href="#analysis-of-key-metrics-by-trend---sector" id="toc-analysis-of-key-metrics-by-trend---sector" class="nav-link" data-scroll-target="#analysis-of-key-metrics-by-trend---sector"><strong>Analysis of Key Metrics by Trend - Sector</strong></a></li>
+  <li><a href="#analysis-of-key-metrics-by-trend---employee-size" id="toc-analysis-of-key-metrics-by-trend---employee-size" class="nav-link" data-scroll-target="#analysis-of-key-metrics-by-trend---employee-size"><strong>Analysis of Key Metrics by Trend - Employee Size</strong></a></li>
+  <li><a href="#average-deal-value-by-sector" id="toc-average-deal-value-by-sector" class="nav-link" data-scroll-target="#average-deal-value-by-sector"><strong>Average Deal Value by Sector</strong></a></li>
+  <li><a href="#average-deal-value-by-employee-size" id="toc-average-deal-value-by-employee-size" class="nav-link" data-scroll-target="#average-deal-value-by-employee-size"><strong>Average Deal Value by Employee Size</strong></a></li>
+  <li><a href="#average-deal-value-by-regional-office" id="toc-average-deal-value-by-regional-office" class="nav-link" data-scroll-target="#average-deal-value-by-regional-office"><strong>Average Deal Value by Regional Office</strong></a></li>
+  </ul></li>
+  <li><a href="#deal-event-value-analysis" id="toc-deal-event-value-analysis" class="nav-link" data-scroll-target="#deal-event-value-analysis"><strong>Deal Event Value Analysis</strong></a></li>
+  <li><a href="#sales-agents-performance" id="toc-sales-agents-performance" class="nav-link" data-scroll-target="#sales-agents-performance"><strong>Sales Agents Performance</strong></a>
+  <ul class="collapse">
+  <li><a href="#formulating-an-approach" id="toc-formulating-an-approach" class="nav-link" data-scroll-target="#formulating-an-approach"><strong>Formulating an Approach</strong></a></li>
+  <li><a href="#understanding-sales-agents-performance" id="toc-understanding-sales-agents-performance" class="nav-link" data-scroll-target="#understanding-sales-agents-performance"><strong>Understanding Sales Agents Performance</strong></a></li>
+  </ul></li>
+  </ul>
+</nav>
+</div>
+<main class="content quarto-banner-title-block" id="quarto-document-content">
+
+
+
+
+<section id="introduction" class="level1">
+<h1><strong>Introduction</strong></h1>
+<section id="what-is-a-crm-data" class="level2">
+<h2 class="anchored" data-anchor-id="what-is-a-crm-data"><strong>What is a CRM Data?</strong></h2>
+<p>Customer Relationship Management (CRM) data serves as the backbone of effective sales and marketing strategies in today’s competitive business environment. By systematically capturing and organizing detailed information about customers, prospects, and sales interactions, CRM systems offer businesses invaluable insights into consumer behavior, preferences, and purchasing patterns.</p>
+<p>The strategic utilization of CRM data allows companies to enhance customer engagement through personalized marketing campaigns. By analyzing data points such as purchase history, communication preferences, and feedback, businesses can tailor their messages and offers to meet the unique needs of each customer, thereby increasing the relevance and impact of their marketing efforts.</p>
+<p>Moreover, CRM data is critical for optimizing sales strategies. Sales teams can use this data to identify high-value prospects, track the progress of ongoing deals, and streamline the sales process. By understanding which strategies lead to successful conversions, companies can refine their sales tactics to focus on the most effective approaches, ultimately increasing efficiency and maximizing sales outcomes.</p>
+<p>In essence, CRM data not only helps in building stronger relationships with customers by providing personalized experiences but also empowers sales and marketing teams with the data-driven insights needed to make informed decisions. This strategic advantage is essential for sustaining growth and maintaining competitiveness in any industry.</p>
+</section>
+<section id="the-scenario" class="level2">
+<h2 class="anchored" data-anchor-id="the-scenario"><strong>The Scenario</strong></h2>
+<p>A B2B company that sells computer hardware has been collecting sales pipeline data for sometime. However due to lack of data expertise, they have not been able to extract valuable insights from the data. You are a new data consultant hired to analyze the CRM data and provide actionable recommendations to improve sales. The task at hand is to sift through extensive data in the CRM system, identify patterns, segment customers, and provide insights on past sales performance and recommendations for future sales strategies.</p>
+<p>The data for this project comes from <a href="https://www.mavenanalytics.io/data-playground">Maven Analytics</a>. The next section will provide an overview of the data.</p>
+</section>
+</section>
+<section id="data-overview" class="level1">
+<h1><strong>Data Overview</strong></h1>
+<p>The CRM database contains the following tables:</p>
+<ol type="1">
+<li><strong>Accounts</strong>: Contains information about the companies that have purchased products from the company.</li>
+<li><strong>Products</strong>: Contains information about the products sold by the company.</li>
+<li><strong>Sales Team</strong>: Contains information about the sales team members.</li>
+<li><strong>Sales Pipeline</strong>: Contains information about the sales opportunities and deals in the pipeline.</li>
+</ol>
+<p>Note that this analysis will focus on the CRM data for the United States, as all other countries in the dataset have only 1 account (customer) each.</p>
+<p>When merged together, we get a better picture of the dataset. The following columns are added to the merged dataset:</p>
+<ul>
+<li><p><strong>Engage Month:</strong> The month in which the account was last engaged with.</p></li>
+<li><p><strong>Close Month:</strong> The month in which the deal was closed.</p></li>
+<li><p><strong>Employee_Size:</strong> The size of the company in terms of number of employees.</p></li>
+<li><p><strong>Time to Close:</strong> The number of days from <code>engage_date</code> to <code>close_date</code>.</p></li>
+<li><p><strong>Time to Close Bin:</strong> A categorical variable that bins the <code>time_to_close</code> into 4 categories:</p>
+<ul>
+<li><code>0-30 days</code>, <code>31-60 days</code>, <code>61-90 days</code>, <code>&gt;90 days</code>.</li>
+</ul></li>
+</ul>
+<p>The image below is a summary of the dataset after adding the new columns and filtering for the United States.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert Skimr Summary Image Here</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="customer-segmentation" class="level1">
+<h1><strong>Customer Segmentation</strong></h1>
+<p>In the initial phase of CRM data analysis, selecting the right features for customer segmentation is crucial as it lays the foundation for tailored marketing strategies and enhanced sales targeting. For this dataset, <strong>Sector</strong>, <strong>Regional Office</strong>, and <strong>Employee Size</strong> make sense to use as segmentation features for the following reasons -</p>
+<ul>
+<li><p>Segmenting customers by <strong>Sector</strong> allows the company to understand industry-specific needs and tailor products accordingly.</p></li>
+<li><p>Segmenting customers by <strong>Regional Office</strong> helps in recognizing geographical trends and local market dynamics, which can significantly influence sales strategies and product offerings.</p></li>
+<li><p>Segmenting by <strong>Employee Size</strong> provides insights into the organizational scale of potential clients, enabling the company to customize its approach based on the size and capabilities of each customer.</p></li>
+</ul>
+<p>By focusing on these features, we can effectively group similar accounts, paving the way for more focused and strategic decision-making that aligns with the unique characteristics and needs of each segment.</p>
+<section id="customer-segmentation-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="customer-segmentation-analysis"><strong>Customer Segmentation Analysis</strong></h2>
+<p>The following visualizations provide insights into the distribution of accounts, deals and revenue across different sectors, regional offices, and employee size categories.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../png/segmentation_analysis_sector.png" class="img-fluid figure-img" style="width:90.0%"></p>
+</figure>
+</div>
+<p>We can see that accounts in the Retail sector make up the highest proportion of accounts and deals in our CRM data. Retail accounts also have revenues of about $1.5B on average. Accounts in the Software sector however have the highest revenue on average at about $5.6B. These Software accounts make up roughly 10% of total accounts and 12% of deals. Retail, Medical and Software sector together account for about 44% of total deals. These accounts would surely take priority in sales and marketing strategies.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert Accounts, Deals &amp; Revenue by Employee Size Here</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Looking at employee size. We’ll notice that our computer hardware products are mostly geared towards large companies. Almost half (50%) of total accounts and deals come from companies with 0 - 1000, and 2051 - 5000 employees. Given the high revenue from 10000 + employee companies, we can deduce that these companies are more likely to be Software companies.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert Accounts, Deals &amp; Revenue by Regional Office Here</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Looking at regional offices. The number of accounts and deals are almost evenly distributed. The East office however generates a lower percentage of deals (28.20%) compared with the Central office at 36.11% and the West office at 35.69%. Just like other segments, we can deduce that the East and West office locations probably cater to more accounts in the Software sector than the Central office.</p>
+<hr>
+</section>
+</section>
+<section id="key-metrics" class="level1">
+<h1><strong>Key Metrics</strong></h1>
+<p>In the analysis of CRM data, several key metrics stand out as essential for evaluating the effectiveness and efficiency of the sales pipeline. Understanding these metrics aid in optimizing sales processes and targeting efforts. Here’s an overview of the critical metrics that will be the focus of our analysis:</p>
+<p>Given the data available in our CRM, what metrics would be most relevant to track and analyze to improve sales performance? We need metrics that offer clear insights into our sales process and help identify areas for improvement. Here are some key metrics that would be relevant for our analysis -</p>
+<ul>
+<li><p><strong>Deal Close Rate:</strong> This metric shows the percentage of deals that successfully close compared to the total deals initiated. It’s a direct indicator of how effectively our sales team converts opportunities into sales, and tracking this can highlight where we might need to improve our sales tactics or training.</p></li>
+<li><p><strong>Average Deal Value:</strong> Sometimes called ASP (Average Selling Price). Understanding the average revenue from each closed deal helps us gauge the economic impact of our sales efforts. This metric is essential for planning and forecasting, as it tells us how much revenue we can expect on average from each transaction.</p></li>
+<li><p><strong>Average Deal Event Value:</strong> By measuring the revenue generated from specific sales events or campaigns, we can identify which activities are most effective at driving sales. The deal event value is calculated by multiplying the Average Deal Value by the Deal Close Rate.</p></li>
+<li><p><strong>Average Time to Close:</strong> This metric measures the average number of days it takes to close a deal from the time it was initiated. A shorter time to close indicates a more efficient sales process, while a longer time might suggest bottlenecks or inefficiencies that need to be addressed. Longer time to close may also just be a result of high value deals that require more time to finalize due to complexity.</p></li>
+</ul>
+<hr>
+</section>
+<section id="analysis-of-key-metrics" class="level1">
+<h1><strong>Analysis of Key Metrics</strong></h1>
+<section id="average-time-to-close" class="level2">
+<h2 class="anchored" data-anchor-id="average-time-to-close"><strong>Average Time to Close</strong></h2>
+<p>The “Average Time to Close” metric is an indicator of the efficiency of the sales process across different segments of the company. This metric measures the average number of days it takes to close a deal from the initial contact. Analysis shows variability in closure times across regional offices, employee sizes, and sectors. For instance, the East regional office reports an average time of 47.1 days, slightly quicker than the Central and West offices, which average 48.6 and 48.7 days, respectively. Similarly, larger companies with over 10,000 employees tend to close deals faster, averaging 46.5 days, compared to smaller companies, which can take up to 49.7 days for those with 7501 to 10,000 employees. In sector-wise analysis, technology firms close deals the quickest, averaging 45.7 days, whereas software companies show a longer average closure time at 49.7 days. Understanding these variations helps pinpoint areas where the sales process can be optimized and indicates how different factors such as regional dynamics, company size, and industry type influence sales efficiency.</p>
+<p>Typically in industry, companies use different time frames to measure the time to close, such as month 0 (initial contact and deal close within the same calender month), 0 - 30 days, 0 - 60 days, 0 - 90 days, etc. What you’ll normally find is that while the volume of closed deals will higher for larger time frames like 0 - 90 days, the overall trends and seasonality will be the same across all time frames.</p>
+<p>For this analysis, we can also look at various time frames (from initial contact to deal close) to see if there are any trends or patterns that can be identified. We have seen that the overall average time to close in days is 48 days and the median is 45 days.</p>
+<p>The charts below show the distribution of time to close in days across different time frames.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert Time to Close Distribution by Sector Here</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>A few observations -</p>
+<ol type="1">
+<li><p>The majority of deals (about 46%) close within 0 - 30 days, and 61 - 90 days (about 23%). fewer deals close within 31 - 60 days. This supports the data we saw earlier that the average time to close is 48 days.</p></li>
+<li><p>Technology sector has the highest number of deals that close within 0 - 30 days at 50%, while employment sector has the lowest at 45%.</p></li>
+<li><p>Telecommunications sector has the highest proportion of deals that take 90 days or more to close at 22%, while the Marketing sector has the lowest at 19%.</p></li>
+</ol>
+<p>When looked at by employee size, companies with 10000 + employees have the highest proportion of deals that close within 0 - 30 days at 50%. When looked at by regional office, the East office has the highest proportion of deals that close within 0 - 30 days at 49%. You can see those charts <a href="#time-to-close-distribution-by-employee-size">here</a> and <a href="#time-to-close-distribution-by-regional-office">here</a>.</p>
+</section>
+<section id="deal-close-rate-average-deal-value" class="level2">
+<h2 class="anchored" data-anchor-id="deal-close-rate-average-deal-value"><strong>Deal Close Rate &amp; Average Deal Value</strong></h2>
+<p>Let’s analyze these other metrics together as they are all related, once again focusing on our key segments - sector, employee size and regional office. The tables below show the deal close rate and average deal value for each segment, sorted in descending order by deal event value. We’ll use the overall company metrics as a benchmark</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert Metrics Table by Sector Here</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>By sector, we can make a few observations -</p>
+<ul>
+<li><p>Marketing has the highest close rate at 60%, which is also better than the overall company close rate by +3.82%. This sector however, also has the lowest average deal value ($2,123) and deal event value ($1,266), which are -11.41% and -8.02% compared to the overall company metrics. This suggests strong effectiveness in securing deals, although the value of those deals is much lower than other sectors.</p></li>
+<li><p>Entertainment however, with deal close rate of 58% has the highest average deal value ($2,650) and deal event value ($1,528), which are +10.50% and +10.95% compared to the overall company metrics. This sector may be a source of more lucrative deals that contribute more significantly to the company’s revenue despite a slightly lower frequency of closure.</p></li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert Metrics Table by Employee Size Here</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The 10000 + and 5001 - 7500 employee sizes stand out for having the highest close rates (58.6% and 59.7% respectively) and average deal values ($2,640 and $2,492 respectively). These employee size companies also outperform the overall company benchmarks.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert Metrics Table by Regional Office Here</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>By regional office, the Central office may have some areas of opportunity as it has the lowest close rates, average deal values and deal event values. This is also the only office that under performs the overall company metrics across all metrics.</p>
+<hr>
+</section>
+</section>
+<section id="analysis-of-key-metrics-by-trend" class="level1">
+<h1><strong>Analysis of Key Metrics by Trend</strong></h1>
+<p>So far we have analyzed the ke metrics (deal close rate, average deal value, average deal event value) by segments (sector, employee size, regional office) at an aggregate level over the entire time frame. We can also analyze these metrics over time to identify trends and patterns that may provide additional insights.</p>
+<p>Let’s start by looking at the trend of the deal close rate over time. The chart below shows the deal close rate over time. Note that for deal close rate, we’ll use a 60 day window (from engage date to close date) to calculate the close rate. Note that given the 60 day window, we closed deals for the last few months may not be be fully realized yet. Thus, we’ll exclude the last 2 months from the analysis.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert Deal Close Rate Overall Trend Here</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Looking at the bars (total deals), there appears to be a general upward trend in the total number of deals from January to October, with some fluctuations. The highest number of deals occured in July and October, indicating peak deal activity in those months.</p>
+<p>Deal close rate (line chart on secondary axis) shows significant variability, starting from a lower rate in January, there is an initial increase until April, followed by a decline and then a steady increase from July onwards. Notably, the deal close rate accelerates dramatically from August to October, reaching it’s peak in October. As mentioned earlier, the total number of deals closed in the last 2 months may not be fully realized yet.</p>
+<p>These trends suggest a few things -</p>
+<ul>
+<li><p><strong>Seasonal or Cyclical Trends:</strong> The data may suggest a seasonal or cyclical pattern in both the total number of deals and the close rates. This could be influenced by market conditions, sales cycles, or operational changes throughout the year.</p></li>
+<li><p><strong>Efficiency Increase:</strong> The sharp increase in the close rate towards the end of the year, despite the already high volume of deals, could indicate improved efficiency in sales processes or perhaps the introduction of new strategies or tools that enhanced closing capabilities.</p></li>
+<li><p><strong>Potential Strategy Adjustments:</strong> The periods of lower efficiency (e.g., the dip around June and July for close rates) might be focal points for reviewing sales strategies or operational tactics to ensure steadier performance throughout the year. Resource Allocation: The increase in deals and close rates later in the year might require adjustments in resource allocation, such as staffing, budgeting, and marketing efforts, to capitalize on potential high-performance periods.</p></li>
+</ul>
+<section id="analysis-of-key-metrics-by-trend---sector" class="level2">
+<h2 class="anchored" data-anchor-id="analysis-of-key-metrics-by-trend---sector"><strong>Analysis of Key Metrics by Trend - Sector</strong></h2>
+<p>Let’s now look at the trend of the key metrics (deal close rate, average deal value, average deal event value) by sector over time using the chart below. Note that all the subplots share the same primary and secondary axis, and also share the same x-axis.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert Metrics Trend by Sector Here</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>For total deals close (grey bars) we can see all sectors follow the same trend we saw earlier in the overall company chart, with the count of total deals peaking around July 2017. Retail and medical sectors clearly generate the highest number of deals.</p>
+<p>For deal close rate (line chart on secondary axis), once again, all sectors show a similar pattern to the overall company trend. We see the deal close rate first peak around April 2017, then fluctuate until July, and then increase steadily afterwards. Entertainment, medical and Telecommunication sectors saw a dip in close rate is the last month. Once again this could be due to the fact that deals closed in the last month may not be fully realized yet.</p>
+</section>
+<section id="analysis-of-key-metrics-by-trend---employee-size" class="level2">
+<h2 class="anchored" data-anchor-id="analysis-of-key-metrics-by-trend---employee-size"><strong>Analysis of Key Metrics by Trend - Employee Size</strong></h2>
+</section>
+<section id="average-deal-value-by-sector" class="level2">
+<h2 class="anchored" data-anchor-id="average-deal-value-by-sector"><strong>Average Deal Value by Sector</strong></h2>
+<p>The chart below shows the average deal value by sector. This metric is important as it helps us understand the revenue generated from each sector.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert Average Deal Value by Sector Here</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We notice there is considerable volatility in average deal value across all sectors throughout the year. This volatility could be indicative of market dynamics, customer behavior changes, or internal strategic shifts within the sectors.</p>
+<p>Finance, telecommunications and entertainment sectors show significant upward trends in average deal value. Marketing, retail, software and technology also appear to be on an upward trend, though not as pronounced as the first three sectors. Medical, Services and Employment sectors show a downward trend in average deal value. These last 3 sectors may require additional attention to understand the factors driving the decline in average deal value.</p>
+<p>Understanding trends in average deal value can help allocate resources more efficiently and prepare for demand surges.</p>
+</section>
+<section id="average-deal-value-by-employee-size" class="level2">
+<h2 class="anchored" data-anchor-id="average-deal-value-by-employee-size"><strong>Average Deal Value by Employee Size</strong></h2>
+<p>Looking at average deal value by employee size, the 10000+, 0 - 1000 and 7501 - 10000 employee sizes show an upward trend in average deal value. the 5001 - 7500 employee size has remained relatively flat, while the 2051 - 5000 companies show a downward trend in average deal value.</p>
+</section>
+<section id="average-deal-value-by-regional-office" class="level2">
+<h2 class="anchored" data-anchor-id="average-deal-value-by-regional-office"><strong>Average Deal Value by Regional Office</strong></h2>
+<p>The east office is the only location showing a consistent upward trend in average deal value, with an increase of 200% with January to December 2017. Sale leaders will need to look within this office location to understand what factors are driving this increase in average deal value and what learnings can be applied to other office locations.</p>
+<hr>
+</section>
+</section>
+<section id="deal-event-value-analysis" class="level1">
+<h1><strong>Deal Event Value Analysis</strong></h1>
+<p>The deal event value combines the deal close rate and average deal value to showcase the value of a potential deal at the time of engagement.</p>
+<p>By sector, all sectors show an upward trend in deal event value, some more pronounced than others. Software, finance and retail all have deal event values crossing the $2,000 mark, indicating these sectors are generating high value deals.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert Deal Event Value by Sector Here</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>By employee size, the 10000+ employee size has appears to be breaking the $2,000 mark starting in September 2017. Closely following in the 0 - 1000 employee size. All other employee sizes also show an upward trend in deal event value, though not as pronounced as the first two.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert Deal Event Value by Employee Size Here</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>By Regional office, once again, the East shows the most pronounced upward trend in deal event value, and also crossing the $2,000 mark around November 2017.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert Deal Event Value by Employee Size Here</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<hr>
+</section>
+<section id="sales-agents-performance" class="level1">
+<h1><strong>Sales Agents Performance</strong></h1>
+<section id="formulating-an-approach" class="level2">
+<h2 class="anchored" data-anchor-id="formulating-an-approach"><strong>Formulating an Approach</strong></h2>
+<p>To gauge the performance of sales representatives effectively, we can formulate an approach that integrates our key metrics: Deal Close Rate, Average Deal Value, Deal Event Value, and Average Time to Close. Here’s how we could analyze and categorized the performance of each sales rep:</p>
+<ol type="1">
+<li><strong>Computation of Key Metrics:</strong> Initially, we compute out metrics for each sales rep These metrics are: Deal Close Rate: The percentage of deals each sales rep closes successfully.</li>
+</ol>
+<ul>
+<li><p>Average Deal Value: The average monetary value of deals closed by each rep.</p></li>
+<li><p>Deal Event Value: The value generated from specific sales events managed by each rep.</p></li>
+<li><p>Average Time to Close: The average duration it takes for each rep to close a deal from the initiation stage.</p></li>
+</ul>
+<ol start="2" type="1">
+<li><p><strong>Quantile Classification:</strong> Each metric was segmented into quantiles. This statistical technique divides the data into equal parts, helping to understand how each rep’s performance stacks up against their peers.</p></li>
+<li><p><strong>Combined Score Calculation:</strong> After segmenting each metric into quantiles, we can sum up the quantile scores for each metric pertaining to every sales rep. This cumulative quantile score provides a holistic view of a rep’s overall performance, factoring in various aspects of their sales efficiency and effectiveness.</p></li>
+<li><p><strong>Performance Categorization:</strong> Based on the combined scores, we can divide the sales reps into three performance categories:</p></li>
+</ol>
+<ul>
+<li><p><strong>Top Performers (66th percentile and above):</strong> These are the reps whose combined metric scores place them in the top third of the distribution. Their consistent high performance across multiple metrics indicates their critical role in driving sales and revenue.</p></li>
+<li><p><strong>Mid Performers (33rd to 66th percentile):</strong> Representatives in this group show competency in their roles but may benefit from targeted improvements in specific areas.</p></li>
+<li><p><strong>Low Performers (below 33rd percentile):</strong> Sales reps in this category are those who scored the lowest in their combined metrics, highlighting areas where significant enhancements may be needed to meet expected sales targets.</p></li>
+</ul>
+<p>This approach not only pinpoints where each sales rep stands in terms of performance but also uncovers deeper insights into their strengths and potential areas for improvement. By quantifying performance through a combination of critical sales metrics, the management team can tailor development programs, optimize sales strategies, and better allocate resources. Moreover, this analysis fosters a more objective, transparent, and motivating environment for sales reps to understand and enhance their performance.</p>
+</section>
+<section id="understanding-sales-agents-performance" class="level2">
+<h2 class="anchored" data-anchor-id="understanding-sales-agents-performance"><strong>Understanding Sales Agents Performance</strong></h2>
+<p>Going a step further it would help to understand drivers of performance for each sales rep. Several factors that could influence sales reps performance includes things like tenure, training, manager, regional office, etc. We can explore some of these factors and see how they may correlate with sales reps performance.</p>
+<section id="tenure" class="level3">
+<h3 class="anchored" data-anchor-id="tenure"><strong>Tenure</strong></h3>
+<p>Tenure is an important factor that can influence sales performance. Sales reps with longer tenure may have built stronger relationships with clients, developed better sales strategies, and acquired more experience in handling various sales scenarios. While our dataset does not include any information on tenure, we can use the earliest deal date as a proxy for tenure.</p>
+<p>Judging from the table above, tenure may not be a significant factor in sales performance, as the average tenure for top, mid and low performers is pretty close. Average tenure for top performers and low performers is even more similar (412 days vs 415 days respectively).</p>
+</section>
+<section id="manager" class="level3">
+<h3 class="anchored" data-anchor-id="manager">_<strong>Manager</strong></h3>
+<p>The manager a sales rep reports to can also have a significant impact on their performance. Managers play a crucial role in providing guidance, support, and training to their team members, which can directly influence sales outcomes.</p>
+<p>All 6 managers have 5 sales agents each. Rocco Neubert has 3 top performers and 2 mid performers. Someone like this may be considered a top performing manager. Summer Seward has 2 top performers, 2 mid performers and 1 low performer. All other managers have only 1 top performer each. Sales leadership may want to look into what Rocco Neubert is doing differently and see if those strategies can be applied to other managers.</p>
+</section>
+<section id="regional-office" class="level3">
+<h3 class="anchored" data-anchor-id="regional-office"><strong>Regional Office</strong></h3>
+<p>Earlier we saw the East office had the highest average deal value and deal event value. This office also has the most amount of top performers:</p>
+<p>Once again, sales leadership may want to determine if there are office specific strategies that are driving the performance of the East office and see if those can be applied to other office locations.</p>
+</section>
+<section id="product" class="level3">
+<h3 class="anchored" data-anchor-id="product"><strong>Product</strong></h3>
+<p>Finally, we can analyze the performance of sales reps by product. Are top performers closing more deals on products with better conversion rates and deal event values? To try and answer this question, let’s look at our key metrics by product.</p>
+<p>The table above is sorted in descending order by deal event value. We can observe a few things:</p>
+<ul>
+<li><p>In terms of deal event value, the GTK 500, GTX Plus Pro and GTXPro have the highest values.</p></li>
+<li><p>In terms of conversion rates, the GTK Plus and GTXPro have the highest rates.</p></li>
+</ul>
+<p>Next let’s analyze the top 3 and bottom 3 performing sales reps, based on the combined score.</p>
+<p>The top 3 performing sales reps appear to be closing about 40% of deals on GTX Plus Pro, GTXPro and MG Advanced products which have better conversion rates, deal event values and lower time to close.</p>
+<p>The bottom 3 performing sales reps on the other hand are closing more deals on GTX Basic, GTX Plus Basic and MG Special which have the lowest deal event values and take more time to close.</p>
+<p>Offcourse these are just hypotheses of what could be driving sales reps performance. In reality, what products sales reps are closing deals on my depend on multiple factors such as expertise, office location, or just overall strategy. Given the limitations of the dataset, it would be difficult to draw any concrete conclusions without further context.</p>
+<!-- -->
+
+</section>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  const viewSource = window.document.getElementById('quarto-view-source') ||
+                     window.document.getElementById('quarto-code-tools-source');
+  if (viewSource) {
+    const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+    viewSource.addEventListener("click", function(e) {
+      if (sourceUrl) {
+        // rstudio viewer pane
+        if (/\bcapabilities=\b/.test(window.location)) {
+          window.open(sourceUrl);
+        } else {
+          window.location.href = sourceUrl;
+        }
+      } else {
+        const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+        modal.show();
+      }
+      return false;
+    });
+  }
+  function toggleCodeHandler(show) {
+    return function(e) {
+      const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+      for (let i=0; i<detailsSrc.length; i++) {
+        const details = detailsSrc[i].parentElement;
+        if (show) {
+          details.open = true;
+        } else {
+          details.removeAttribute("open");
+        }
+      }
+      const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+      const fromCls = show ? "hidden" : "unhidden";
+      const toCls = show ? "unhidden" : "hidden";
+      for (let i=0; i<cellCodeDivs.length; i++) {
+        const codeDiv = cellCodeDivs[i];
+        if (codeDiv.classList.contains(fromCls)) {
+          codeDiv.classList.remove(fromCls);
+          codeDiv.classList.add(toCls);
+        } 
+      }
+      return false;
+    }
+  }
+  const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+  if (hideAllCode) {
+    hideAllCode.addEventListener("click", toggleCodeHandler(false));
+  }
+  const showAllCode = window.document.getElementById("quarto-show-all-code");
+  if (showAllCode) {
+    showAllCode.addEventListener("click", toggleCodeHandler(true));
+  }
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="sourceCode" id="cb14" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "CRM Data Analysis"</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Lucas Okwudishu"</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span><span class="co"> html</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="an">editor:</span><span class="co"> visual</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>title: "CRM Data Analysis"</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>subtitle: "TBD"</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>date: 05/11/2024</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>author: Lucas Okwudishu</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>title-block-banner: true</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>format:</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>  html:</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>    toc: true</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>    toc-depth: 2</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>    number-sections: false</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>    theme: flatly</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>    code-fold: false</span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>    code-tools: true</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>    page-layout: article</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>link-citations: true</span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>categories: <span class="co">[</span><span class="ot">customer segmentation</span><span class="co">]</span></span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a><span class="fu"># __Introduction__</span></span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a><span class="fu">## __What is a CRM Data?__</span></span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>Customer Relationship Management (CRM) data serves as the backbone of effective sales and marketing strategies in today's competitive business environment. By systematically capturing and organizing detailed information about customers, prospects, and sales interactions, CRM systems offer businesses invaluable insights into consumer behavior, preferences, and purchasing patterns.</span>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>The strategic utilization of CRM data allows companies to enhance customer engagement through personalized marketing campaigns. By analyzing data points such as purchase history, communication preferences, and feedback, businesses can tailor their messages and offers to meet the unique needs of each customer, thereby increasing the relevance and impact of their marketing efforts.</span>
+<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>Moreover, CRM data is critical for optimizing sales strategies. Sales teams can use this data to identify high-value prospects, track the progress of ongoing deals, and streamline the sales process. By understanding which strategies lead to successful conversions, companies can refine their sales tactics to focus on the most effective approaches, ultimately increasing efficiency and maximizing sales outcomes.</span>
+<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>In essence, CRM data not only helps in building stronger relationships with customers by providing personalized experiences but also empowers sales and marketing teams with the data-driven insights needed to make informed decisions. This strategic advantage is essential for sustaining growth and maintaining competitiveness in any industry.</span>
+<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a><span class="fu">## __The Scenario__</span></span>
+<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-42"><a href="#cb14-42" aria-hidden="true" tabindex="-1"></a>A B2B company that sells computer hardware has been collecting sales pipeline data for sometime. However due </span>
+<span id="cb14-43"><a href="#cb14-43" aria-hidden="true" tabindex="-1"></a>to lack of data expertise, they have not been able to extract valuable insights from the data. You are a new </span>
+<span id="cb14-44"><a href="#cb14-44" aria-hidden="true" tabindex="-1"></a>data consultant hired to analyze the CRM data and provide actionable recommendations to improve sales. </span>
+<span id="cb14-45"><a href="#cb14-45" aria-hidden="true" tabindex="-1"></a>The task at hand is to sift through extensive data in the CRM system, identify patterns, segment customers,</span>
+<span id="cb14-46"><a href="#cb14-46" aria-hidden="true" tabindex="-1"></a>and provide insights on past sales performance and recommendations for future sales strategies.</span>
+<span id="cb14-47"><a href="#cb14-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-48"><a href="#cb14-48" aria-hidden="true" tabindex="-1"></a>The data for this project comes from <span class="co">[</span><span class="ot">Maven Analytics</span><span class="co">](https://www.mavenanalytics.io/data-playground)</span>. </span>
+<span id="cb14-49"><a href="#cb14-49" aria-hidden="true" tabindex="-1"></a>The next section will provide an overview of the data.</span>
+<span id="cb14-50"><a href="#cb14-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-51"><a href="#cb14-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-52"><a href="#cb14-52" aria-hidden="true" tabindex="-1"></a><span class="fu"># __Data Overview__</span></span>
+<span id="cb14-53"><a href="#cb14-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-54"><a href="#cb14-54" aria-hidden="true" tabindex="-1"></a>The CRM database contains the following tables:</span>
+<span id="cb14-55"><a href="#cb14-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-56"><a href="#cb14-56" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Accounts**: Contains information about the companies that have purchased products from the company.</span>
+<span id="cb14-57"><a href="#cb14-57" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Products**: Contains information about the products sold by the company.</span>
+<span id="cb14-58"><a href="#cb14-58" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Sales Team**: Contains information about the sales team members.</span>
+<span id="cb14-59"><a href="#cb14-59" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>**Sales Pipeline**: Contains information about the sales opportunities and deals in the pipeline.</span>
+<span id="cb14-60"><a href="#cb14-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-61"><a href="#cb14-61" aria-hidden="true" tabindex="-1"></a>Note that this analysis will focus on the CRM data for the United States, as all other countries in the dataset</span>
+<span id="cb14-62"><a href="#cb14-62" aria-hidden="true" tabindex="-1"></a>have only 1 account (customer) each.</span>
+<span id="cb14-63"><a href="#cb14-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-64"><a href="#cb14-64" aria-hidden="true" tabindex="-1"></a>When merged together, we get a better picture of the dataset. The following columns are added to the merged dataset:</span>
+<span id="cb14-65"><a href="#cb14-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-66"><a href="#cb14-66" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>__Engage Month:__ The month in which the account was last engaged with.</span>
+<span id="cb14-67"><a href="#cb14-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-68"><a href="#cb14-68" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>__Close Month:__ The month in which the deal was closed.</span>
+<span id="cb14-69"><a href="#cb14-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-70"><a href="#cb14-70" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>__Employee_Size:__ The size of the company in terms of number of employees.</span>
+<span id="cb14-71"><a href="#cb14-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-72"><a href="#cb14-72" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>__Time to Close:__ The number of days from <span class="in">`engage_date`</span> to <span class="in">`close_date`</span>.</span>
+<span id="cb14-73"><a href="#cb14-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-74"><a href="#cb14-74" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>__Time to Close Bin:__ A categorical variable that bins the <span class="in">`time_to_close`</span> into 4 categories: </span>
+<span id="cb14-75"><a href="#cb14-75" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span><span class="in">`0-30 days`</span>, <span class="in">`31-60 days`</span>, <span class="in">`61-90 days`</span>, <span class="in">`&gt;90 days`</span>.</span>
+<span id="cb14-76"><a href="#cb14-76" aria-hidden="true" tabindex="-1"></a> </span>
+<span id="cb14-77"><a href="#cb14-77" aria-hidden="true" tabindex="-1"></a>The image below is a summary of the dataset after adding the new columns and filtering</span>
+<span id="cb14-78"><a href="#cb14-78" aria-hidden="true" tabindex="-1"></a>for the United States.</span>
+<span id="cb14-79"><a href="#cb14-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-82"><a href="#cb14-82" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb14-83"><a href="#cb14-83" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert Skimr Summary Image Here</span></span>
+<span id="cb14-84"><a href="#cb14-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-85"><a href="#cb14-85" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-86"><a href="#cb14-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-87"><a href="#cb14-87" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-88"><a href="#cb14-88" aria-hidden="true" tabindex="-1"></a><span class="fu"># __Customer Segmentation__</span></span>
+<span id="cb14-89"><a href="#cb14-89" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-90"><a href="#cb14-90" aria-hidden="true" tabindex="-1"></a>In the initial phase of CRM data analysis, selecting the right features for customer segmentation is crucial as it lays the foundation for tailored marketing strategies and enhanced sales targeting. For this dataset, __Sector__, __Regional Office__, and __Employee Size__ make sense to use as segmentation features for the following reasons - </span>
+<span id="cb14-91"><a href="#cb14-91" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-92"><a href="#cb14-92" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>Segmenting customers by __Sector__ allows the company to understand industry-specific needs and tailor products accordingly. </span>
+<span id="cb14-93"><a href="#cb14-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-94"><a href="#cb14-94" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>Segmenting customers by __Regional Office__ helps in recognizing geographical trends and local market dynamics, which can significantly influence sales strategies and product offerings. </span>
+<span id="cb14-95"><a href="#cb14-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-96"><a href="#cb14-96" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>Segmenting by __Employee Size__ provides insights into the organizational scale of potential clients, enabling the company to customize its approach based on the size and capabilities of each customer. </span>
+<span id="cb14-97"><a href="#cb14-97" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-98"><a href="#cb14-98" aria-hidden="true" tabindex="-1"></a>By focusing on these features, we can effectively group similar accounts, paving the way for more focused and strategic decision-making that aligns with the unique characteristics and needs of each segment.</span>
+<span id="cb14-99"><a href="#cb14-99" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-100"><a href="#cb14-100" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-101"><a href="#cb14-101" aria-hidden="true" tabindex="-1"></a><span class="fu">## __Customer Segmentation Analysis__</span></span>
+<span id="cb14-102"><a href="#cb14-102" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-103"><a href="#cb14-103" aria-hidden="true" tabindex="-1"></a>The following visualizations provide insights into the distribution of accounts, deals and revenue across different sectors, regional offices, and employee size categories. </span>
+<span id="cb14-104"><a href="#cb14-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-105"><a href="#cb14-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-106"><a href="#cb14-106" aria-hidden="true" tabindex="-1"></a><span class="al">![](../png/segmentation_analysis_sector.png)</span>{width=90% fig-align=center}</span>
+<span id="cb14-107"><a href="#cb14-107" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-108"><a href="#cb14-108" aria-hidden="true" tabindex="-1"></a>We can see that accounts in the Retail sector make up the highest proportion of </span>
+<span id="cb14-109"><a href="#cb14-109" aria-hidden="true" tabindex="-1"></a>accounts and deals in our CRM data. Retail accounts also have revenues of about</span>
+<span id="cb14-110"><a href="#cb14-110" aria-hidden="true" tabindex="-1"></a>$1.5B on average. Accounts in the Software sector however have the highest revenue</span>
+<span id="cb14-111"><a href="#cb14-111" aria-hidden="true" tabindex="-1"></a>on average at about $5.6B. These Software accounts make up roughly 10% of total accounts</span>
+<span id="cb14-112"><a href="#cb14-112" aria-hidden="true" tabindex="-1"></a>and 12% of deals. Retail, Medical and Software sector together account for about 44% </span>
+<span id="cb14-113"><a href="#cb14-113" aria-hidden="true" tabindex="-1"></a>of total deals. These accounts would surely take priority in sales and marketing strategies.</span>
+<span id="cb14-114"><a href="#cb14-114" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-117"><a href="#cb14-117" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb14-118"><a href="#cb14-118" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert Accounts, Deals &amp; Revenue by Employee Size Here</span></span>
+<span id="cb14-119"><a href="#cb14-119" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-120"><a href="#cb14-120" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-121"><a href="#cb14-121" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-122"><a href="#cb14-122" aria-hidden="true" tabindex="-1"></a>Looking at employee size. We'll notice that our computer hardware products are mostly</span>
+<span id="cb14-123"><a href="#cb14-123" aria-hidden="true" tabindex="-1"></a>geared towards large companies. Almost half (50%) of total accounts and deals come from companies</span>
+<span id="cb14-124"><a href="#cb14-124" aria-hidden="true" tabindex="-1"></a>with 0 - 1000, and 2051 - 5000 employees. Given the high revenue from 10000 + employee companies,</span>
+<span id="cb14-125"><a href="#cb14-125" aria-hidden="true" tabindex="-1"></a>we can deduce that these companies are more likely to be Software companies. </span>
+<span id="cb14-126"><a href="#cb14-126" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-129"><a href="#cb14-129" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb14-130"><a href="#cb14-130" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert Accounts, Deals &amp; Revenue by Regional Office Here</span></span>
+<span id="cb14-131"><a href="#cb14-131" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-132"><a href="#cb14-132" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-133"><a href="#cb14-133" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-134"><a href="#cb14-134" aria-hidden="true" tabindex="-1"></a>Looking at regional offices. The number of accounts and deals are almost evenly distributed.</span>
+<span id="cb14-135"><a href="#cb14-135" aria-hidden="true" tabindex="-1"></a>The East office however generates a lower percentage of deals (28.20%) compared with</span>
+<span id="cb14-136"><a href="#cb14-136" aria-hidden="true" tabindex="-1"></a>the Central office at 36.11% and the West office at 35.69%. Just like other segments,</span>
+<span id="cb14-137"><a href="#cb14-137" aria-hidden="true" tabindex="-1"></a>we can deduce that the East and West office locations probably cater to more accounts</span>
+<span id="cb14-138"><a href="#cb14-138" aria-hidden="true" tabindex="-1"></a>in the Software sector than the Central office. </span>
+<span id="cb14-139"><a href="#cb14-139" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-140"><a href="#cb14-140" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb14-141"><a href="#cb14-141" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-142"><a href="#cb14-142" aria-hidden="true" tabindex="-1"></a><span class="fu"># __Key Metrics__</span></span>
+<span id="cb14-143"><a href="#cb14-143" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-144"><a href="#cb14-144" aria-hidden="true" tabindex="-1"></a>In the analysis of CRM data,  several key metrics stand out as essential for evaluating the effectiveness and efficiency of the sales pipeline. </span>
+<span id="cb14-145"><a href="#cb14-145" aria-hidden="true" tabindex="-1"></a>Understanding these metrics aid in optimizing sales processes and targeting efforts. Here’s an overview of the critical metrics that will be the focus of our analysis:</span>
+<span id="cb14-146"><a href="#cb14-146" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-147"><a href="#cb14-147" aria-hidden="true" tabindex="-1"></a>Given the data available in our CRM, what metrics would be most relevant to track and analyze to improve sales performance?</span>
+<span id="cb14-148"><a href="#cb14-148" aria-hidden="true" tabindex="-1"></a>We need metrics that offer clear insights into our sales process and help identify areas for improvement. Here are some key metrics that would be relevant for our analysis - </span>
+<span id="cb14-149"><a href="#cb14-149" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-150"><a href="#cb14-150" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>__Deal Close Rate:__ This metric shows the percentage of deals that successfully close compared to the total deals initiated. It’s a direct indicator of how effectively </span>
+<span id="cb14-151"><a href="#cb14-151" aria-hidden="true" tabindex="-1"></a>our sales team converts opportunities into sales, and tracking this can highlight where we might need to improve our sales tactics or training.</span>
+<span id="cb14-152"><a href="#cb14-152" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-153"><a href="#cb14-153" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>__Average Deal Value:__ Sometimes called ASP (Average Selling Price). Understanding the average revenue from each closed deal helps us gauge the economic impact of our sales efforts. </span>
+<span id="cb14-154"><a href="#cb14-154" aria-hidden="true" tabindex="-1"></a>This metric is essential for planning and forecasting, as it tells us how much revenue we can expect on average from each transaction.</span>
+<span id="cb14-155"><a href="#cb14-155" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-156"><a href="#cb14-156" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>__Average Deal Event Value:__ By measuring the revenue generated from specific sales events or campaigns, we can identify which </span>
+<span id="cb14-157"><a href="#cb14-157" aria-hidden="true" tabindex="-1"></a>activities are most effective at driving sales. The deal event value is calculated by multiplying the Average Deal Value by the Deal Close Rate.</span>
+<span id="cb14-158"><a href="#cb14-158" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-159"><a href="#cb14-159" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>__Average Time to Close:__ This metric measures the average number of days it takes to close a deal from the time it was initiated.</span>
+<span id="cb14-160"><a href="#cb14-160" aria-hidden="true" tabindex="-1"></a>A shorter time to close indicates a more efficient sales process, while a longer time might suggest bottlenecks or inefficiencies that need to be addressed.</span>
+<span id="cb14-161"><a href="#cb14-161" aria-hidden="true" tabindex="-1"></a>Longer time to close may also just be a result of high value deals that require more time to finalize due to complexity.</span>
+<span id="cb14-162"><a href="#cb14-162" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-163"><a href="#cb14-163" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb14-164"><a href="#cb14-164" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-165"><a href="#cb14-165" aria-hidden="true" tabindex="-1"></a><span class="fu"># __Analysis of Key Metrics__</span></span>
+<span id="cb14-166"><a href="#cb14-166" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-167"><a href="#cb14-167" aria-hidden="true" tabindex="-1"></a><span class="fu">## __Average Time to Close__</span></span>
+<span id="cb14-168"><a href="#cb14-168" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-169"><a href="#cb14-169" aria-hidden="true" tabindex="-1"></a>The "Average Time to Close" metric is an indicator of the efficiency of the sales process across different segments of the </span>
+<span id="cb14-170"><a href="#cb14-170" aria-hidden="true" tabindex="-1"></a>company. This metric measures the average number of days it takes to close a deal from the initial contact. Analysis shows </span>
+<span id="cb14-171"><a href="#cb14-171" aria-hidden="true" tabindex="-1"></a>variability in closure times across regional offices, employee sizes, and sectors. For instance, the East regional office</span>
+<span id="cb14-172"><a href="#cb14-172" aria-hidden="true" tabindex="-1"></a>reports an average time of 47.1 days, slightly quicker than the Central and West offices, which average 48.6 and 48.7 days, </span>
+<span id="cb14-173"><a href="#cb14-173" aria-hidden="true" tabindex="-1"></a>respectively. Similarly, larger companies with over 10,000 employees tend to close deals faster, averaging 46.5 days, </span>
+<span id="cb14-174"><a href="#cb14-174" aria-hidden="true" tabindex="-1"></a>compared to smaller companies, which can take up to 49.7 days for those with 7501 to 10,000 employees. In sector-wise </span>
+<span id="cb14-175"><a href="#cb14-175" aria-hidden="true" tabindex="-1"></a>analysis, technology firms close deals the quickest, averaging 45.7 days, whereas software companies show a longer average </span>
+<span id="cb14-176"><a href="#cb14-176" aria-hidden="true" tabindex="-1"></a>closure time at 49.7 days. Understanding these variations helps pinpoint areas where the sales process can be optimized and </span>
+<span id="cb14-177"><a href="#cb14-177" aria-hidden="true" tabindex="-1"></a>indicates how different factors such as regional dynamics, company size, and industry type influence sales efficiency.</span>
+<span id="cb14-178"><a href="#cb14-178" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-179"><a href="#cb14-179" aria-hidden="true" tabindex="-1"></a>Typically in industry, companies use different time frames to measure the time to close, such as </span>
+<span id="cb14-180"><a href="#cb14-180" aria-hidden="true" tabindex="-1"></a>month 0 (initial contact and deal close within the same calender month), 0 - 30 days, 0 - 60 days, 0 - 90 days, etc. </span>
+<span id="cb14-181"><a href="#cb14-181" aria-hidden="true" tabindex="-1"></a>What you'll normally find is that while the volume of closed deals will higher for larger time frames like 0 - 90 days,</span>
+<span id="cb14-182"><a href="#cb14-182" aria-hidden="true" tabindex="-1"></a>the overall trends and seasonality will be the same across all time frames. </span>
+<span id="cb14-183"><a href="#cb14-183" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-184"><a href="#cb14-184" aria-hidden="true" tabindex="-1"></a>For this analysis, we can also look at various time frames (from initial contact to deal close) to see if there are any trends or patterns that can be identified. </span>
+<span id="cb14-185"><a href="#cb14-185" aria-hidden="true" tabindex="-1"></a>We have seen that the overall average time to close in days is 48 days and the median is 45 days.</span>
+<span id="cb14-186"><a href="#cb14-186" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-187"><a href="#cb14-187" aria-hidden="true" tabindex="-1"></a>The charts below show the distribution of time to close in days across different time frames.</span>
+<span id="cb14-188"><a href="#cb14-188" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-191"><a href="#cb14-191" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb14-192"><a href="#cb14-192" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert Time to Close Distribution by Sector Here</span></span>
+<span id="cb14-193"><a href="#cb14-193" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-194"><a href="#cb14-194" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-195"><a href="#cb14-195" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-196"><a href="#cb14-196" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-197"><a href="#cb14-197" aria-hidden="true" tabindex="-1"></a>A few observations - </span>
+<span id="cb14-198"><a href="#cb14-198" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-199"><a href="#cb14-199" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>The majority of deals (about 46%) close within 0 - 30 days, and 61 - 90 days (about 23%).</span>
+<span id="cb14-200"><a href="#cb14-200" aria-hidden="true" tabindex="-1"></a>fewer deals close within 31 - 60 days. This supports the data we saw earlier that the average time to close is 48 days.</span>
+<span id="cb14-201"><a href="#cb14-201" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-202"><a href="#cb14-202" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Technology sector has the highest number of deals that close within 0 - 30 days at 50%, while employment sector has the lowest at 45%.</span>
+<span id="cb14-203"><a href="#cb14-203" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-204"><a href="#cb14-204" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Telecommunications sector has the highest proportion of deals that take 90 days or more to close at 22%, while the Marketing sector has the lowest at 19%.</span>
+<span id="cb14-205"><a href="#cb14-205" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-206"><a href="#cb14-206" aria-hidden="true" tabindex="-1"></a>When looked at by employee size, companies with 10000 + employees have the highest proportion of deals that close within 0 - 30 days at 50%. When </span>
+<span id="cb14-207"><a href="#cb14-207" aria-hidden="true" tabindex="-1"></a>looked at by regional office, the East office has the highest proportion of deals that close within 0 - 30 days at 49%. You can see those </span>
+<span id="cb14-208"><a href="#cb14-208" aria-hidden="true" tabindex="-1"></a>charts <span class="co">[</span><span class="ot">here</span><span class="co">](#time-to-close-distribution-by-employee-size)</span> and <span class="co">[</span><span class="ot">here</span><span class="co">](#time-to-close-distribution-by-regional-office)</span>.</span>
+<span id="cb14-209"><a href="#cb14-209" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-210"><a href="#cb14-210" aria-hidden="true" tabindex="-1"></a><span class="fu">## __Deal Close Rate &amp; Average Deal Value__</span></span>
+<span id="cb14-211"><a href="#cb14-211" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-212"><a href="#cb14-212" aria-hidden="true" tabindex="-1"></a>Let's analyze these other metrics together as they are all related, once again focusing</span>
+<span id="cb14-213"><a href="#cb14-213" aria-hidden="true" tabindex="-1"></a>on our key segments - sector, employee size and regional office. The tables below</span>
+<span id="cb14-214"><a href="#cb14-214" aria-hidden="true" tabindex="-1"></a>show the deal close rate and average deal value for each segment, sorted in descending</span>
+<span id="cb14-215"><a href="#cb14-215" aria-hidden="true" tabindex="-1"></a>order by deal event value. We'll use the overall company metrics as a benchmark</span>
+<span id="cb14-216"><a href="#cb14-216" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-219"><a href="#cb14-219" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb14-220"><a href="#cb14-220" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert Metrics Table by Sector Here</span></span>
+<span id="cb14-221"><a href="#cb14-221" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-222"><a href="#cb14-222" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-223"><a href="#cb14-223" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-224"><a href="#cb14-224" aria-hidden="true" tabindex="-1"></a>By sector, we can make a few observations - </span>
+<span id="cb14-225"><a href="#cb14-225" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-226"><a href="#cb14-226" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>Marketing has the highest close rate at 60%, which is also better than the</span>
+<span id="cb14-227"><a href="#cb14-227" aria-hidden="true" tabindex="-1"></a>overall company close rate by +3.82%. This sector however, also has the lowest </span>
+<span id="cb14-228"><a href="#cb14-228" aria-hidden="true" tabindex="-1"></a>average deal value ($2,123) and deal event value ($1,266), which are -11.41% and </span>
+<span id="cb14-229"><a href="#cb14-229" aria-hidden="true" tabindex="-1"></a>-8.02% compared to the overall company metrics. This suggests strong effectiveness </span>
+<span id="cb14-230"><a href="#cb14-230" aria-hidden="true" tabindex="-1"></a>in securing deals, although the value of those deals is much lower than other sectors. </span>
+<span id="cb14-231"><a href="#cb14-231" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-232"><a href="#cb14-232" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>Entertainment however, with deal close rate of 58% has the highest average deal value ($2,650)</span>
+<span id="cb14-233"><a href="#cb14-233" aria-hidden="true" tabindex="-1"></a>and deal event value ($1,528), which are +10.50% and +10.95% compared to the overall company metrics. This</span>
+<span id="cb14-234"><a href="#cb14-234" aria-hidden="true" tabindex="-1"></a>sector may be a source of more lucrative deals that contribute more significantly to the company's revenue</span>
+<span id="cb14-235"><a href="#cb14-235" aria-hidden="true" tabindex="-1"></a>despite a slightly lower frequency of closure. </span>
+<span id="cb14-236"><a href="#cb14-236" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-237"><a href="#cb14-237" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-240"><a href="#cb14-240" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb14-241"><a href="#cb14-241" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert Metrics Table by Employee Size Here</span></span>
+<span id="cb14-242"><a href="#cb14-242" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-243"><a href="#cb14-243" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-244"><a href="#cb14-244" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-245"><a href="#cb14-245" aria-hidden="true" tabindex="-1"></a>The 10000 + and 5001 - 7500 employee sizes stand out for having the highest close rates </span>
+<span id="cb14-246"><a href="#cb14-246" aria-hidden="true" tabindex="-1"></a>(58.6% and 59.7% respectively) and average deal values ($2,640 and $2,492 respectively). </span>
+<span id="cb14-247"><a href="#cb14-247" aria-hidden="true" tabindex="-1"></a>These employee size companies also outperform the overall company benchmarks.</span>
+<span id="cb14-248"><a href="#cb14-248" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-251"><a href="#cb14-251" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb14-252"><a href="#cb14-252" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert Metrics Table by Regional Office Here</span></span>
+<span id="cb14-253"><a href="#cb14-253" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-254"><a href="#cb14-254" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-255"><a href="#cb14-255" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-256"><a href="#cb14-256" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-257"><a href="#cb14-257" aria-hidden="true" tabindex="-1"></a>By regional office, the Central office may have some areas of opportunity as it has </span>
+<span id="cb14-258"><a href="#cb14-258" aria-hidden="true" tabindex="-1"></a>the lowest close rates, average deal values and deal event values. This is also the </span>
+<span id="cb14-259"><a href="#cb14-259" aria-hidden="true" tabindex="-1"></a>only office that under performs the overall company metrics across all metrics.</span>
+<span id="cb14-260"><a href="#cb14-260" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-261"><a href="#cb14-261" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb14-262"><a href="#cb14-262" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-263"><a href="#cb14-263" aria-hidden="true" tabindex="-1"></a><span class="fu"># __Analysis of Key Metrics by Trend__</span></span>
+<span id="cb14-264"><a href="#cb14-264" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-265"><a href="#cb14-265" aria-hidden="true" tabindex="-1"></a>So far we have analyzed the ke metrics (deal close rate, average deal value, average deal event value) by segments</span>
+<span id="cb14-266"><a href="#cb14-266" aria-hidden="true" tabindex="-1"></a>(sector, employee size, regional office) at an aggregate level over the entire time frame. </span>
+<span id="cb14-267"><a href="#cb14-267" aria-hidden="true" tabindex="-1"></a>We can also analyze these metrics over time to identify trends and patterns that may provide additional insights.</span>
+<span id="cb14-268"><a href="#cb14-268" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-269"><a href="#cb14-269" aria-hidden="true" tabindex="-1"></a>Let's start by looking at the trend of the deal close rate over time. The chart below shows the deal close rate</span>
+<span id="cb14-270"><a href="#cb14-270" aria-hidden="true" tabindex="-1"></a>over time. Note that for deal close rate, we'll use a 60 day window (from engage date to close date) to calculate the close rate.</span>
+<span id="cb14-271"><a href="#cb14-271" aria-hidden="true" tabindex="-1"></a>Note that given the 60 day window, we closed deals for the last few months may not be</span>
+<span id="cb14-272"><a href="#cb14-272" aria-hidden="true" tabindex="-1"></a>be fully realized yet. Thus, we'll exclude the last 2 months from the analysis.</span>
+<span id="cb14-273"><a href="#cb14-273" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-274"><a href="#cb14-274" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-277"><a href="#cb14-277" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb14-278"><a href="#cb14-278" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert Deal Close Rate Overall Trend Here</span></span>
+<span id="cb14-279"><a href="#cb14-279" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-280"><a href="#cb14-280" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-281"><a href="#cb14-281" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-282"><a href="#cb14-282" aria-hidden="true" tabindex="-1"></a>Looking at the bars (total deals), there appears to be a general upward trend in the</span>
+<span id="cb14-283"><a href="#cb14-283" aria-hidden="true" tabindex="-1"></a>total number of deals from January to October, with some fluctuations. The highest number of </span>
+<span id="cb14-284"><a href="#cb14-284" aria-hidden="true" tabindex="-1"></a>deals occured in July and October, indicating peak deal activity in those months.</span>
+<span id="cb14-285"><a href="#cb14-285" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-286"><a href="#cb14-286" aria-hidden="true" tabindex="-1"></a>Deal close rate (line chart on secondary axis) shows significant variability, starting</span>
+<span id="cb14-287"><a href="#cb14-287" aria-hidden="true" tabindex="-1"></a>from a lower rate in January, there is an initial increase until April, followed by a </span>
+<span id="cb14-288"><a href="#cb14-288" aria-hidden="true" tabindex="-1"></a>decline and then a steady increase from July onwards. Notably, the deal close rate accelerates</span>
+<span id="cb14-289"><a href="#cb14-289" aria-hidden="true" tabindex="-1"></a>dramatically from August to October, reaching it's peak in October.  As mentioned earlier,</span>
+<span id="cb14-290"><a href="#cb14-290" aria-hidden="true" tabindex="-1"></a>the total number of deals closed in the last 2 months may not be fully realized yet. </span>
+<span id="cb14-291"><a href="#cb14-291" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-292"><a href="#cb14-292" aria-hidden="true" tabindex="-1"></a>These trends suggest a few things - </span>
+<span id="cb14-293"><a href="#cb14-293" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-294"><a href="#cb14-294" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>__Seasonal or Cyclical Trends:__ The data may suggest a seasonal or cyclical pattern </span>
+<span id="cb14-295"><a href="#cb14-295" aria-hidden="true" tabindex="-1"></a>in both the total number of deals and the close rates. This could be influenced by </span>
+<span id="cb14-296"><a href="#cb14-296" aria-hidden="true" tabindex="-1"></a>market conditions, sales cycles, or operational changes throughout the year.</span>
+<span id="cb14-297"><a href="#cb14-297" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-298"><a href="#cb14-298" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>__Efficiency Increase:__ The sharp increase in the close rate towards the end of the year, </span>
+<span id="cb14-299"><a href="#cb14-299" aria-hidden="true" tabindex="-1"></a>despite the already high volume of deals, could indicate improved efficiency in sales </span>
+<span id="cb14-300"><a href="#cb14-300" aria-hidden="true" tabindex="-1"></a>processes or perhaps the introduction of new strategies or tools that enhanced closing </span>
+<span id="cb14-301"><a href="#cb14-301" aria-hidden="true" tabindex="-1"></a>capabilities.</span>
+<span id="cb14-302"><a href="#cb14-302" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-303"><a href="#cb14-303" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>__Potential Strategy Adjustments:__ The periods of lower efficiency (e.g., the dip around </span>
+<span id="cb14-304"><a href="#cb14-304" aria-hidden="true" tabindex="-1"></a>June and July for close rates) might be focal points for reviewing sales strategies or operational </span>
+<span id="cb14-305"><a href="#cb14-305" aria-hidden="true" tabindex="-1"></a>tactics to ensure steadier performance throughout the year. Resource Allocation: The increase in </span>
+<span id="cb14-306"><a href="#cb14-306" aria-hidden="true" tabindex="-1"></a>deals and close rates later in the year might require adjustments in resource allocation, such as </span>
+<span id="cb14-307"><a href="#cb14-307" aria-hidden="true" tabindex="-1"></a>staffing, budgeting, and marketing efforts, to capitalize on potential high-performance periods.</span>
+<span id="cb14-308"><a href="#cb14-308" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-309"><a href="#cb14-309" aria-hidden="true" tabindex="-1"></a><span class="fu">## __Analysis of Key Metrics by Trend - Sector__</span></span>
+<span id="cb14-310"><a href="#cb14-310" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-311"><a href="#cb14-311" aria-hidden="true" tabindex="-1"></a>Let's now look at the trend of the key metrics (deal close rate, average deal value, </span>
+<span id="cb14-312"><a href="#cb14-312" aria-hidden="true" tabindex="-1"></a>average deal event value) by sector over time using the chart below. Note that all</span>
+<span id="cb14-313"><a href="#cb14-313" aria-hidden="true" tabindex="-1"></a>the subplots share the same primary and secondary axis, and also share the same x-axis.</span>
+<span id="cb14-314"><a href="#cb14-314" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-317"><a href="#cb14-317" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb14-318"><a href="#cb14-318" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert Metrics Trend by Sector Here</span></span>
+<span id="cb14-319"><a href="#cb14-319" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-320"><a href="#cb14-320" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-321"><a href="#cb14-321" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-322"><a href="#cb14-322" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-323"><a href="#cb14-323" aria-hidden="true" tabindex="-1"></a>For total deals close (grey bars) we can see all sectors follow the same trend we </span>
+<span id="cb14-324"><a href="#cb14-324" aria-hidden="true" tabindex="-1"></a>saw earlier in the overall company chart, with the count of total deals peaking around</span>
+<span id="cb14-325"><a href="#cb14-325" aria-hidden="true" tabindex="-1"></a>July 2017. Retail and medical sectors clearly generate the highest number of deals.</span>
+<span id="cb14-326"><a href="#cb14-326" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-327"><a href="#cb14-327" aria-hidden="true" tabindex="-1"></a>For deal close rate (line chart on secondary axis), once again, all sectors show </span>
+<span id="cb14-328"><a href="#cb14-328" aria-hidden="true" tabindex="-1"></a>a similar pattern to the overall company trend. We see the deal close rate first peak </span>
+<span id="cb14-329"><a href="#cb14-329" aria-hidden="true" tabindex="-1"></a>around April 2017, then fluctuate until July, and then increase steadily afterwards. </span>
+<span id="cb14-330"><a href="#cb14-330" aria-hidden="true" tabindex="-1"></a>Entertainment, medical and Telecommunication sectors saw a dip in close rate is the </span>
+<span id="cb14-331"><a href="#cb14-331" aria-hidden="true" tabindex="-1"></a>last month. Once again this could be due to the fact that deals closed in the last month</span>
+<span id="cb14-332"><a href="#cb14-332" aria-hidden="true" tabindex="-1"></a>may not be fully realized yet.</span>
+<span id="cb14-333"><a href="#cb14-333" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-334"><a href="#cb14-334" aria-hidden="true" tabindex="-1"></a><span class="fu">## __Analysis of Key Metrics by Trend - Employee Size__</span></span>
+<span id="cb14-335"><a href="#cb14-335" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-336"><a href="#cb14-336" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-337"><a href="#cb14-337" aria-hidden="true" tabindex="-1"></a><span class="fu">## __Average Deal Value by Sector__</span></span>
+<span id="cb14-338"><a href="#cb14-338" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-339"><a href="#cb14-339" aria-hidden="true" tabindex="-1"></a>The chart below shows the average deal value by sector. This metric is important as it</span>
+<span id="cb14-340"><a href="#cb14-340" aria-hidden="true" tabindex="-1"></a>helps us understand the revenue generated from each sector. </span>
+<span id="cb14-341"><a href="#cb14-341" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-344"><a href="#cb14-344" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb14-345"><a href="#cb14-345" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert Average Deal Value by Sector Here</span></span>
+<span id="cb14-346"><a href="#cb14-346" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-347"><a href="#cb14-347" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-348"><a href="#cb14-348" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-349"><a href="#cb14-349" aria-hidden="true" tabindex="-1"></a>We notice there is considerable volatility in average deal value across all sectors </span>
+<span id="cb14-350"><a href="#cb14-350" aria-hidden="true" tabindex="-1"></a>throughout the year. This volatility could be indicative of market dynamics, customer behavior</span>
+<span id="cb14-351"><a href="#cb14-351" aria-hidden="true" tabindex="-1"></a>changes, or internal strategic shifts within the sectors. </span>
+<span id="cb14-352"><a href="#cb14-352" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-353"><a href="#cb14-353" aria-hidden="true" tabindex="-1"></a>Finance, telecommunications and entertainment sectors show significant upward trends in average deal value.</span>
+<span id="cb14-354"><a href="#cb14-354" aria-hidden="true" tabindex="-1"></a>Marketing, retail, software and technology also appear to be on an upward trend, though not as pronounced as the</span>
+<span id="cb14-355"><a href="#cb14-355" aria-hidden="true" tabindex="-1"></a>first three sectors. Medical, Services and Employment sectors show a downward trend in average deal value. </span>
+<span id="cb14-356"><a href="#cb14-356" aria-hidden="true" tabindex="-1"></a>These last 3 sectors may require additional attention to understand the factors driving the decline in average deal value.</span>
+<span id="cb14-357"><a href="#cb14-357" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-358"><a href="#cb14-358" aria-hidden="true" tabindex="-1"></a>Understanding trends in average deal value can help allocate resources more efficiently and </span>
+<span id="cb14-359"><a href="#cb14-359" aria-hidden="true" tabindex="-1"></a>prepare for demand surges. </span>
+<span id="cb14-360"><a href="#cb14-360" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-361"><a href="#cb14-361" aria-hidden="true" tabindex="-1"></a><span class="fu">## __Average Deal Value by Employee Size__</span></span>
+<span id="cb14-362"><a href="#cb14-362" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-363"><a href="#cb14-363" aria-hidden="true" tabindex="-1"></a>Looking at average deal value by employee size, the 10000+, 0 - 1000 and 7501 - 10000 employee sizes</span>
+<span id="cb14-364"><a href="#cb14-364" aria-hidden="true" tabindex="-1"></a>show an upward trend in average deal value. the 5001 - 7500 employee size has remained relatively flat,</span>
+<span id="cb14-365"><a href="#cb14-365" aria-hidden="true" tabindex="-1"></a>while the 2051 - 5000 companies show a downward trend in average deal value.</span>
+<span id="cb14-366"><a href="#cb14-366" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-367"><a href="#cb14-367" aria-hidden="true" tabindex="-1"></a><span class="fu">## __Average Deal Value by Regional Office__</span></span>
+<span id="cb14-368"><a href="#cb14-368" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-369"><a href="#cb14-369" aria-hidden="true" tabindex="-1"></a>The east office is the only location showing a consistent upward trend in average deal value,</span>
+<span id="cb14-370"><a href="#cb14-370" aria-hidden="true" tabindex="-1"></a>with an increase of 200% with January to December 2017. Sale leaders will need to look</span>
+<span id="cb14-371"><a href="#cb14-371" aria-hidden="true" tabindex="-1"></a>within this office location to understand what factors are driving this increase in average deal value</span>
+<span id="cb14-372"><a href="#cb14-372" aria-hidden="true" tabindex="-1"></a>and what learnings can be applied to other office locations.</span>
+<span id="cb14-373"><a href="#cb14-373" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-374"><a href="#cb14-374" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb14-375"><a href="#cb14-375" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-376"><a href="#cb14-376" aria-hidden="true" tabindex="-1"></a><span class="fu"># __Deal Event Value Analysis__</span></span>
+<span id="cb14-377"><a href="#cb14-377" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-378"><a href="#cb14-378" aria-hidden="true" tabindex="-1"></a>The deal event value combines the deal close rate and average deal value to showcase</span>
+<span id="cb14-379"><a href="#cb14-379" aria-hidden="true" tabindex="-1"></a>the value of a potential deal at the time of engagement. </span>
+<span id="cb14-380"><a href="#cb14-380" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-381"><a href="#cb14-381" aria-hidden="true" tabindex="-1"></a>By sector, all sectors show an upward trend in deal event value, some more pronounced than others.</span>
+<span id="cb14-382"><a href="#cb14-382" aria-hidden="true" tabindex="-1"></a>Software, finance and retail all have deal event values crossing the $2,000 mark, indicating</span>
+<span id="cb14-383"><a href="#cb14-383" aria-hidden="true" tabindex="-1"></a>these sectors are generating high value deals.</span>
+<span id="cb14-384"><a href="#cb14-384" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-387"><a href="#cb14-387" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb14-388"><a href="#cb14-388" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert Deal Event Value by Sector Here</span></span>
+<span id="cb14-389"><a href="#cb14-389" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-390"><a href="#cb14-390" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-391"><a href="#cb14-391" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-392"><a href="#cb14-392" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-393"><a href="#cb14-393" aria-hidden="true" tabindex="-1"></a>By employee size, the 10000+ employee size has appears to be breaking the $2,000</span>
+<span id="cb14-394"><a href="#cb14-394" aria-hidden="true" tabindex="-1"></a>mark starting in September 2017. Closely following in the 0 - 1000 employee size.</span>
+<span id="cb14-395"><a href="#cb14-395" aria-hidden="true" tabindex="-1"></a>All other employee sizes also show an upward trend in deal event value, though not</span>
+<span id="cb14-396"><a href="#cb14-396" aria-hidden="true" tabindex="-1"></a>as pronounced as the first two.</span>
+<span id="cb14-397"><a href="#cb14-397" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-400"><a href="#cb14-400" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb14-401"><a href="#cb14-401" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert Deal Event Value by Employee Size Here</span></span>
+<span id="cb14-402"><a href="#cb14-402" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-403"><a href="#cb14-403" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-404"><a href="#cb14-404" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-405"><a href="#cb14-405" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-406"><a href="#cb14-406" aria-hidden="true" tabindex="-1"></a>By Regional office, once again, the East shows the most pronounced upward trend in deal event value,</span>
+<span id="cb14-407"><a href="#cb14-407" aria-hidden="true" tabindex="-1"></a>and also crossing the $2,000 mark around November 2017.</span>
+<span id="cb14-408"><a href="#cb14-408" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-411"><a href="#cb14-411" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb14-412"><a href="#cb14-412" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert Deal Event Value by Employee Size Here</span></span>
+<span id="cb14-413"><a href="#cb14-413" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-414"><a href="#cb14-414" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-415"><a href="#cb14-415" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-416"><a href="#cb14-416" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-417"><a href="#cb14-417" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb14-418"><a href="#cb14-418" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-419"><a href="#cb14-419" aria-hidden="true" tabindex="-1"></a><span class="fu"># __Sales Agents Performance__</span></span>
+<span id="cb14-420"><a href="#cb14-420" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-421"><a href="#cb14-421" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-422"><a href="#cb14-422" aria-hidden="true" tabindex="-1"></a><span class="fu">## __Formulating an Approach__</span></span>
+<span id="cb14-423"><a href="#cb14-423" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-424"><a href="#cb14-424" aria-hidden="true" tabindex="-1"></a>To gauge the performance of sales representatives effectively, we can formulate an </span>
+<span id="cb14-425"><a href="#cb14-425" aria-hidden="true" tabindex="-1"></a>approach that integrates our key metrics: Deal Close Rate, Average Deal Value, </span>
+<span id="cb14-426"><a href="#cb14-426" aria-hidden="true" tabindex="-1"></a>Deal Event Value, and Average Time to Close. Here's how we could analyze and categorized the performance of each sales rep:</span>
+<span id="cb14-427"><a href="#cb14-427" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-428"><a href="#cb14-428" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>__Computation of Key Metrics:__ Initially, we compute out metrics for each sales rep These metrics are:</span>
+<span id="cb14-429"><a href="#cb14-429" aria-hidden="true" tabindex="-1"></a>Deal Close Rate: The percentage of deals each sales rep closes successfully.</span>
+<span id="cb14-430"><a href="#cb14-430" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-431"><a href="#cb14-431" aria-hidden="true" tabindex="-1"></a><span class="ss">  * </span>Average Deal Value: The average monetary value of deals closed by each rep.</span>
+<span id="cb14-432"><a href="#cb14-432" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb14-433"><a href="#cb14-433" aria-hidden="true" tabindex="-1"></a><span class="ss">  * </span>Deal Event Value: The value generated from specific sales events managed by each rep.</span>
+<span id="cb14-434"><a href="#cb14-434" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb14-435"><a href="#cb14-435" aria-hidden="true" tabindex="-1"></a><span class="ss">  * </span>Average Time to Close: The average duration it takes for each rep to close a deal from the initiation stage.</span>
+<span id="cb14-436"><a href="#cb14-436" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb14-437"><a href="#cb14-437" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>__Quantile Classification:__ Each metric was segmented into quantiles. This statistical </span>
+<span id="cb14-438"><a href="#cb14-438" aria-hidden="true" tabindex="-1"></a>technique divides the data into equal parts, helping to understand how each rep's performance </span>
+<span id="cb14-439"><a href="#cb14-439" aria-hidden="true" tabindex="-1"></a>stacks up against their peers. </span>
+<span id="cb14-440"><a href="#cb14-440" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-441"><a href="#cb14-441" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-442"><a href="#cb14-442" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>__Combined Score Calculation:__ After segmenting each metric into quantiles, we can sum</span>
+<span id="cb14-443"><a href="#cb14-443" aria-hidden="true" tabindex="-1"></a>up the quantile scores for each metric pertaining to every sales rep. This cumulative quantile </span>
+<span id="cb14-444"><a href="#cb14-444" aria-hidden="true" tabindex="-1"></a>score provides a holistic view of a rep's overall performance, factoring in various aspects </span>
+<span id="cb14-445"><a href="#cb14-445" aria-hidden="true" tabindex="-1"></a>of their sales efficiency and effectiveness.</span>
+<span id="cb14-446"><a href="#cb14-446" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-447"><a href="#cb14-447" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>__Performance Categorization:__ Based on the combined scores, we can divide the sales </span>
+<span id="cb14-448"><a href="#cb14-448" aria-hidden="true" tabindex="-1"></a>reps into three performance categories:</span>
+<span id="cb14-449"><a href="#cb14-449" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-450"><a href="#cb14-450" aria-hidden="true" tabindex="-1"></a><span class="ss">  * </span>__Top Performers (66th percentile and above):__ These are the reps whose combined metric scores </span>
+<span id="cb14-451"><a href="#cb14-451" aria-hidden="true" tabindex="-1"></a>  place them in the top third of the distribution. Their consistent high performance across multiple </span>
+<span id="cb14-452"><a href="#cb14-452" aria-hidden="true" tabindex="-1"></a>  metrics indicates their critical role in driving sales and revenue.</span>
+<span id="cb14-453"><a href="#cb14-453" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb14-454"><a href="#cb14-454" aria-hidden="true" tabindex="-1"></a><span class="ss">  * </span>__Mid Performers (33rd to 66th percentile):__ Representatives in this group show competency </span>
+<span id="cb14-455"><a href="#cb14-455" aria-hidden="true" tabindex="-1"></a>  in their roles but may benefit from targeted improvements in specific areas.</span>
+<span id="cb14-456"><a href="#cb14-456" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb14-457"><a href="#cb14-457" aria-hidden="true" tabindex="-1"></a><span class="ss">  * </span>__Low Performers (below 33rd percentile):__ Sales reps in this category are those who scored </span>
+<span id="cb14-458"><a href="#cb14-458" aria-hidden="true" tabindex="-1"></a>  the lowest in their combined metrics, highlighting areas where significant enhancements </span>
+<span id="cb14-459"><a href="#cb14-459" aria-hidden="true" tabindex="-1"></a>  may be needed to meet expected sales targets.</span>
+<span id="cb14-460"><a href="#cb14-460" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb14-461"><a href="#cb14-461" aria-hidden="true" tabindex="-1"></a>This approach not only pinpoints where each sales rep stands in terms of performance </span>
+<span id="cb14-462"><a href="#cb14-462" aria-hidden="true" tabindex="-1"></a>but also uncovers deeper insights into their strengths and potential areas for improvement. </span>
+<span id="cb14-463"><a href="#cb14-463" aria-hidden="true" tabindex="-1"></a>By quantifying performance through a combination of critical sales metrics, the management </span>
+<span id="cb14-464"><a href="#cb14-464" aria-hidden="true" tabindex="-1"></a>team can tailor development programs, optimize sales strategies, and better allocate resources.</span>
+<span id="cb14-465"><a href="#cb14-465" aria-hidden="true" tabindex="-1"></a>Moreover, this analysis fosters a more objective, transparent, and motivating environment for </span>
+<span id="cb14-466"><a href="#cb14-466" aria-hidden="true" tabindex="-1"></a>sales reps to understand and enhance their performance.</span>
+<span id="cb14-467"><a href="#cb14-467" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-468"><a href="#cb14-468" aria-hidden="true" tabindex="-1"></a><span class="fu">## __Understanding Sales Agents Performance__</span></span>
+<span id="cb14-469"><a href="#cb14-469" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-470"><a href="#cb14-470" aria-hidden="true" tabindex="-1"></a>Going a step further it would help to understand drivers of performance for each sales rep.</span>
+<span id="cb14-471"><a href="#cb14-471" aria-hidden="true" tabindex="-1"></a>Several factors that could influence sales reps performance includes things like</span>
+<span id="cb14-472"><a href="#cb14-472" aria-hidden="true" tabindex="-1"></a>tenure, training, manager, regional office, etc. We can explore some of these factors</span>
+<span id="cb14-473"><a href="#cb14-473" aria-hidden="true" tabindex="-1"></a>and see how they may correlate with sales reps performance.</span>
+<span id="cb14-474"><a href="#cb14-474" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-475"><a href="#cb14-475" aria-hidden="true" tabindex="-1"></a><span class="fu">### __Tenure__</span></span>
+<span id="cb14-476"><a href="#cb14-476" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-477"><a href="#cb14-477" aria-hidden="true" tabindex="-1"></a>Tenure is an important factor that can influence sales performance. Sales reps with longer tenure</span>
+<span id="cb14-478"><a href="#cb14-478" aria-hidden="true" tabindex="-1"></a>may have built stronger relationships with clients, developed better sales strategies, and acquired</span>
+<span id="cb14-479"><a href="#cb14-479" aria-hidden="true" tabindex="-1"></a>more experience in handling various sales scenarios. While our dataset does not include any information </span>
+<span id="cb14-480"><a href="#cb14-480" aria-hidden="true" tabindex="-1"></a>on tenure, we can use the earliest deal date as a proxy for tenure. </span>
+<span id="cb14-481"><a href="#cb14-481" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-484"><a href="#cb14-484" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb14-485"><a href="#cb14-485" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-486"><a href="#cb14-486" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-487"><a href="#cb14-487" aria-hidden="true" tabindex="-1"></a>Judging from the table above, tenure may not be a significant factor in sales performance,</span>
+<span id="cb14-488"><a href="#cb14-488" aria-hidden="true" tabindex="-1"></a>as the average tenure for top, mid and low performers is pretty close. Average tenure</span>
+<span id="cb14-489"><a href="#cb14-489" aria-hidden="true" tabindex="-1"></a>for top performers and low performers is even more similar (412 days vs 415 days respectively). </span>
+<span id="cb14-490"><a href="#cb14-490" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-491"><a href="#cb14-491" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-492"><a href="#cb14-492" aria-hidden="true" tabindex="-1"></a><span class="fu">### ___Manager__</span></span>
+<span id="cb14-493"><a href="#cb14-493" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-494"><a href="#cb14-494" aria-hidden="true" tabindex="-1"></a>The manager a sales rep reports to can also have a significant impact on their performance.</span>
+<span id="cb14-495"><a href="#cb14-495" aria-hidden="true" tabindex="-1"></a>Managers play a crucial role in providing guidance, support, and training to their team members,</span>
+<span id="cb14-496"><a href="#cb14-496" aria-hidden="true" tabindex="-1"></a>which can directly influence sales outcomes. </span>
+<span id="cb14-497"><a href="#cb14-497" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-500"><a href="#cb14-500" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb14-501"><a href="#cb14-501" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-502"><a href="#cb14-502" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-503"><a href="#cb14-503" aria-hidden="true" tabindex="-1"></a>All 6 managers have 5 sales agents each. Rocco Neubert has 3 top performers and 2</span>
+<span id="cb14-504"><a href="#cb14-504" aria-hidden="true" tabindex="-1"></a>mid performers. Someone like this may be considered a top performing manager. Summer Seward</span>
+<span id="cb14-505"><a href="#cb14-505" aria-hidden="true" tabindex="-1"></a>has 2 top performers, 2 mid performers and 1 low performer. All other managers have</span>
+<span id="cb14-506"><a href="#cb14-506" aria-hidden="true" tabindex="-1"></a>only 1 top performer each. Sales leadership may want to look into what Rocco Neubert is doing</span>
+<span id="cb14-507"><a href="#cb14-507" aria-hidden="true" tabindex="-1"></a>differently and see if those strategies can be applied to other managers.</span>
+<span id="cb14-508"><a href="#cb14-508" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-509"><a href="#cb14-509" aria-hidden="true" tabindex="-1"></a><span class="fu">### __Regional Office__</span></span>
+<span id="cb14-510"><a href="#cb14-510" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-511"><a href="#cb14-511" aria-hidden="true" tabindex="-1"></a>Earlier we saw the East office had the highest average deal value and deal event value.</span>
+<span id="cb14-512"><a href="#cb14-512" aria-hidden="true" tabindex="-1"></a>This office also has the most amount of top performers:</span>
+<span id="cb14-513"><a href="#cb14-513" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-516"><a href="#cb14-516" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb14-517"><a href="#cb14-517" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-518"><a href="#cb14-518" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-519"><a href="#cb14-519" aria-hidden="true" tabindex="-1"></a>Once again, sales leadership may want to determine if there are office specific</span>
+<span id="cb14-520"><a href="#cb14-520" aria-hidden="true" tabindex="-1"></a>strategies that are driving the performance of the East office and see if those</span>
+<span id="cb14-521"><a href="#cb14-521" aria-hidden="true" tabindex="-1"></a>can be applied to other office locations.</span>
+<span id="cb14-522"><a href="#cb14-522" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-523"><a href="#cb14-523" aria-hidden="true" tabindex="-1"></a><span class="fu">### __Product__</span></span>
+<span id="cb14-524"><a href="#cb14-524" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-525"><a href="#cb14-525" aria-hidden="true" tabindex="-1"></a>Finally, we can analyze the performance of sales reps by product. Are top performers</span>
+<span id="cb14-526"><a href="#cb14-526" aria-hidden="true" tabindex="-1"></a>closing more deals on products with better conversion rates and deal event values?</span>
+<span id="cb14-527"><a href="#cb14-527" aria-hidden="true" tabindex="-1"></a>To try and answer this question, let's look at our key metrics by product.</span>
+<span id="cb14-528"><a href="#cb14-528" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-531"><a href="#cb14-531" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb14-532"><a href="#cb14-532" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-533"><a href="#cb14-533" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-534"><a href="#cb14-534" aria-hidden="true" tabindex="-1"></a>The table above is sorted in descending order by deal event value. We can observe a few things:</span>
+<span id="cb14-535"><a href="#cb14-535" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-536"><a href="#cb14-536" aria-hidden="true" tabindex="-1"></a><span class="ss">  * </span>In terms of deal event value, the GTK 500, GTX Plus Pro and GTXPro have the highest values.</span>
+<span id="cb14-537"><a href="#cb14-537" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-538"><a href="#cb14-538" aria-hidden="true" tabindex="-1"></a><span class="ss">  * </span>In terms of conversion rates, the GTK Plus and GTXPro have the highest rates.</span>
+<span id="cb14-539"><a href="#cb14-539" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb14-540"><a href="#cb14-540" aria-hidden="true" tabindex="-1"></a>Next let's analyze the top 3  and bottom 3 performing sales reps, based on the combined score.</span>
+<span id="cb14-541"><a href="#cb14-541" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-544"><a href="#cb14-544" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb14-545"><a href="#cb14-545" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-546"><a href="#cb14-546" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-547"><a href="#cb14-547" aria-hidden="true" tabindex="-1"></a>The top 3 performing sales reps appear to be closing about 40% of deals on GTX Plus Pro,</span>
+<span id="cb14-548"><a href="#cb14-548" aria-hidden="true" tabindex="-1"></a>GTXPro and MG Advanced products which have better conversion rates, deal event values and lower time to close.</span>
+<span id="cb14-549"><a href="#cb14-549" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-550"><a href="#cb14-550" aria-hidden="true" tabindex="-1"></a>The bottom 3 performing sales reps on the other hand are closing more deals on GTX Basic,</span>
+<span id="cb14-551"><a href="#cb14-551" aria-hidden="true" tabindex="-1"></a>GTX Plus Basic and MG Special which have the lowest deal event values and take more time to close. </span>
+<span id="cb14-552"><a href="#cb14-552" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-553"><a href="#cb14-553" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-554"><a href="#cb14-554" aria-hidden="true" tabindex="-1"></a>Offcourse these are just hypotheses of what could be driving sales reps performance.</span>
+<span id="cb14-555"><a href="#cb14-555" aria-hidden="true" tabindex="-1"></a>In reality, what products sales reps are closing deals on my depend on multiple factors</span>
+<span id="cb14-556"><a href="#cb14-556" aria-hidden="true" tabindex="-1"></a>such as expertise, office location, or just overall strategy. Given the limitations</span>
+<span id="cb14-557"><a href="#cb14-557" aria-hidden="true" tabindex="-1"></a>of the dataset, it would be difficult to draw any concrete conclusions without further</span>
+<span id="cb14-558"><a href="#cb14-558" aria-hidden="true" tabindex="-1"></a>context. </span>
+<span id="cb14-559"><a href="#cb14-559" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-560"><a href="#cb14-560" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-561"><a href="#cb14-561" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-562"><a href="#cb14-562" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-563"><a href="#cb14-563" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-564"><a href="#cb14-564" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-565"><a href="#cb14-565" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-566"><a href="#cb14-566" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-567"><a href="#cb14-567" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-568"><a href="#cb14-568" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-569"><a href="#cb14-569" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-570"><a href="#cb14-570" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-571"><a href="#cb14-571" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-572"><a href="#cb14-572" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-573"><a href="#cb14-573" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-574"><a href="#cb14-574" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-575"><a href="#cb14-575" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-576"><a href="#cb14-576" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-577"><a href="#cb14-577" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-578"><a href="#cb14-578" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-579"><a href="#cb14-579" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-580"><a href="#cb14-580" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-581"><a href="#cb14-581" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-582"><a href="#cb14-582" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-583"><a href="#cb14-583" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-584"><a href="#cb14-584" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-585"><a href="#cb14-585" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-586"><a href="#cb14-586" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-587"><a href="#cb14-587" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-588"><a href="#cb14-588" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-589"><a href="#cb14-589" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-590"><a href="#cb14-590" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-591"><a href="#cb14-591" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-592"><a href="#cb14-592" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-593"><a href="#cb14-593" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-594"><a href="#cb14-594" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-595"><a href="#cb14-595" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-596"><a href="#cb14-596" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-597"><a href="#cb14-597" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-598"><a href="#cb14-598" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-599"><a href="#cb14-599" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-600"><a href="#cb14-600" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-601"><a href="#cb14-601" aria-hidden="true" tabindex="-1"></a></span>
+</code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+
+
+
+</body></html>
