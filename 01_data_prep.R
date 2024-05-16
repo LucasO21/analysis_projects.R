@@ -285,8 +285,8 @@ ttc_regional_office_tbl <- segments_time_to_close[[3]] %>%
 #' - Average Deal ASP
 #' - Average Deal Event Value
 
-# * Time to Close Buckets ----
-segment_name <- "regional_office"
+# 8.1 Time to Close Buckets ----
+segment_name <- "sector" # change to either "employee_size" or "regional_office" and re-run code below
 segment_name_caps <- segment_name %>% str_replace_all("_", " ") %>% str_to_title()
 
 crm_usa_tbl %>% 
@@ -303,26 +303,26 @@ crm_usa_tbl %>%
         aes(label = scales::percent(pct, accuracy = 0.02)), 
         position = position_fill(vjust = 0.5)
     ) +
-    labs(title = str_glue("Time To Close Analysis by {segment_name_caps}", x = "Sector", y = "Count")) +
-    theme_wsj() +
-    theme(legend.title = element_blank())
+    theme_bw() +
+    theme(
+        legend.title = element_blank(),
+        legend.position = "bottom",
+        legend.text = element_text(size = 10),
+        axis.text = element_text(size = 11, color = "black"),
+        plot.title = element_text(size = 16, face = "bold"),
+        plot.subtitle = element_text(size = 14, face = "bold")
+    )+
+    labs(
+        title = str_glue("Time To Close Analysis by {segment_name_caps}"), 
+        x = NULL, 
+        y = "Count"
+    )
     
-  
-# * Metrics Overall ----
-overall_metrics_tbl <- crm_usa_tbl %>% 
-    summarise(
-        deals_total = n_distinct(opportunity_id),
-        deals_closed = n_distinct(opportunity_id[deal_stage == "Won"]),
-        total_close_value = sum(close_value[deal_stage == "Won"]),
-        avg_time_to_close = mean(time_to_close[deal_stage == "Won"], na.rm = TRUE)
-    ) %>% 
-    mutate(deals_close_rate = deals_closed / deals_total) %>% 
-    mutate(avg_deal_value = total_close_value / deals_closed) %>%
-    mutate(deal_event_value = deals_close_rate * avg_deal_value) %>%
-    drop_na()
+# 8.2 Metrics by Segment Tibble List ----
 
-# * Metrics by Segment ----
 # - Deal Close Rate, Average Deal Value, Deal Event Value
+segments <- c("sector", "employee_size", "regional_office")
+
 segments_metrics_tbl <- segments %>% 
     map(function(segment) {
         crm_usa_tbl %>% 
@@ -339,65 +339,10 @@ segments_metrics_tbl <- segments %>%
             drop_na()
 })
 
-
-
-
-
-metrics_vs_company_tbl <- get_metrics_vs_company_data_prepped(
-    crm_data = crm_usa_tbl,
-    segment_data = segments_metrics_tbl[[1]]
-)
-
-gt_table <- metrics_vs_company_tbl %>% 
-    get_gt_table(
-        title                = "Metrics Analysis (by Sector)",
-        green_format_column  = "total_close_value",
-        blue_format_column   = "avg_deal_value",
-        orange_format_column = "deal_event_value",
-        red_format_column    = "deals_close_rate"
-    ) 
-    
-# * Function: Get GT Table with Spanner ----
-get_gt_table_with_spanner <- function(gt_table) {
-    
-    # gt table prep
-    gt <- gt_table %>% 
-        fmt_percent(columns = c(ends_with("Vs Company")), decimals = 2) %>% 
-            tab_spanner(
-                label = "Deal Close Rates",
-                columns = c("Deals Close Rate", "Deal Close Rate Vs Company")
-            ) %>% 
-            tab_spanner(
-                label = "Average Deal Values",
-                columns = c("Avg Deal Value", "Avg Deal Value Vs Company")
-            ) %>%
-            tab_spanner(
-                label = "Deal Event Values",
-                columns = c("Deal Event Value", "Deal Event Value Vs Company")
-            ) %>% 
-            gt_add_divider(columns = "Deal Close Rate Vs Company", sides = "right") %>% 
-            gt_add_divider(columns = "Deals Close Rate", sides = "left") %>% 
-            gt_add_divider(columns = "Avg Deal Value Vs Company", sides = "right") %>% 
-            cols_label(
-                "Deal Close Rate Vs Company" = "VS Company",
-                "Avg Deal Value Vs Company" = "VS Company",
-                "Deal Event Value Vs Company" = "VS Company"
-            ) %>% 
-            cols_width(everything() ~ px(150)) %>% 
-            cols_width(
-                columns = c(ends_with("Vs Company"), ends_with("Total"), ends_with("Closed")) 
-                ~ px(130)
-            )
-    
-    # return
-    return(gt)
-}
-
-
-# * Metrics vs Company (Sector) ----
+# 8.3 Metrics vs Company (Sector) ----
 segments_metrics_tbl[[1]] %>% 
     get_metrics_vs_company_data_prepped(
-        crm_data = crm_usa_tbl, 
+        crm_data    = crm_usa_tbl, 
         sort_column = "deal_event_value"
     ) %>% 
     get_gt_table(
@@ -407,9 +352,10 @@ segments_metrics_tbl[[1]] %>%
         orange_format_column = "deal_event_value",
         red_format_column    = "deals_close_rate"
     ) %>% 
-    get_gt_table_with_spanner()
+    get_gt_table_with_spanner() %>% 
+    gtsave_extra(filename = "../png/metrics_analysis_sector_vs_company.png", zoom = 2) # save as png
 
-# * Metrics vs Company (Employee Size) ----
+# 8.4 Metrics vs Company (Employee Size) ----
 segments_metrics_tbl[[2]] %>% 
     get_metrics_vs_company_data_prepped(
         crm_data = crm_usa_tbl, 
@@ -422,9 +368,10 @@ segments_metrics_tbl[[2]] %>%
         orange_format_column = "deal_event_value",
         red_format_column    = "deals_close_rate"
     ) %>% 
-    get_gt_table_with_spanner()
+    get_gt_table_with_spanner() %>% 
+    gtsave_extra(filename = "../png/metrics_analysis_emp_size_vs_company.png", zoom = 2) # save as png
 
-# * Metrics vs Company (Employee Size) ----
+# 8.5 Metrics vs Company (Employee Size) ----
 segments_metrics_tbl[[3]] %>% 
     get_metrics_vs_company_data_prepped(
         crm_data = crm_usa_tbl, 
@@ -437,14 +384,12 @@ segments_metrics_tbl[[3]] %>%
         orange_format_column = "deal_event_value",
         red_format_column    = "deals_close_rate"
     ) %>% 
-    get_gt_table_with_spanner()
-
-
-
+    get_gt_table_with_spanner() %>% 
+    gtsave_extra(filename = "../png/metrics_analysis_reg_office_vs_company.png", zoom = 2) # save as png
 
 
 # *************************************************************************
-# METRICS TREND ANALYSIS ----
+#9.0 METRICS TREND ANALYSIS ----
 # *************************************************************************
 
 # Close Rate, Average Deal Value & Deal Event Value ----
