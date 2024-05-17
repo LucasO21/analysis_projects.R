@@ -27,6 +27,7 @@ library(ggthemes)
 library(gt)
 library(gtExtras)
 library(webshot2)
+library(magrittr)
 
 # Source Functions ----
 source("../functions/utils_data_wrangling.R")
@@ -407,7 +408,9 @@ segments_metrics_tbl[[3]] %>%
 # 9.0 METRICS TREND ANALYSIS ----
 # *************************************************************************
 
-# 9.1 Total Deals & Close Rate (Overall) ----
+# 9.1 Total Deals & Close Rate ----
+
+# 9.1.1 Overall ----
 crm_usa_tbl %>% 
     get_metrics_trend_data_prepped(group_column = "engage_month") %>% 
     get_metrics_trend_combo_plot(
@@ -419,7 +422,7 @@ crm_usa_tbl %>%
     ggsave(filename = "../png/total_deals_and_close_rate_trend.png", width = 12, height = 6)
     
     
-# 9.2 Total Deals & Close Rate (Sector) ----
+# 9.1.2 Sector ----
 get_metrics_trend_data_prepped(
     data         = crm_usa_tbl,
     segment_name = "sector"
@@ -433,7 +436,7 @@ get_metrics_trend_data_prepped(
     ggsave(filename = "../png/total_deals_and_close_rate_trend_sector.png", width = 14, height = 6)
     
 
-# 9.3 Total Deals & Close Rate (Employee Size) ----
+# 9.1.3 Employee Size ----
 get_metrics_trend_data_prepped(
     data         = crm_usa_tbl,
     segment_name = "employee_size"
@@ -447,7 +450,7 @@ get_metrics_trend_data_prepped(
     ggsave(filename = "../png/total_deals_and_close_rate_trend_empsize.png", width = 12, height = 6)
     
 
-# 9.4 Total Deals & Close Rate (Regional Office) ----
+# 9.1.4 Regional Office ----
 get_metrics_trend_data_prepped(
     data         = crm_usa_tbl,
     segment_name = "regional_office"
@@ -460,100 +463,124 @@ get_metrics_trend_data_prepped(
     ) %>% 
     ggsave(filename = "../png/total_deals_and_close_rate_trend_office.png", width = 12, height = 3)
 
-# Average Deal Value ----
 
-# * Sector ----
-get_metrics_trend_data_prepped(
+# 9.2 Average Deal Value Trend ----
+
+# 9.2.1 Overall ----
+{
+  get_metrics_trend_data_prepped(
     data         = crm_usa_tbl,
     segment_name = "sector"
-) %>% 
-    get_metrics_trend_combo_plot(yp_vars = "avg_deal_value") + 
+  ) %>% 
+    get_metrics_trend_combo_plot(
+      yp_vars = "avg_deal_value",
+      combo = FALSE,
+      facet = TRUE,
+      x_axis_text_size = 9,
+      facet_ncol = 5,
+    ) + 
     labs(
-        title = "Average Deal Value Trend (by Sector)",
-        y     = "Average Deal Value ($)\n"
+      title = "Average Deal Value Trend (by Sector)",
+      y     = "Average Deal Value ($)\n"
     )
+} %>% 
+    ggsave(filename = "../png/avg_deal_value_trend_sector.png", width = 14, height = 6)
 
-# * Average Deal Value Trend (Employee Size) ----
-get_metrics_trend_data_prepped(
+# 9.2.2 Employee Size ----
+{
+  get_metrics_trend_data_prepped(
     data         = crm_usa_tbl,
     segment_name = "employee_size"
-) %>% 
+  ) %>% 
     get_metrics_trend_combo_plot(
-        yp_vars          = "avg_deal_value",
-        combo            = FALSE,
-        facet            = TRUE,
-        x_axis_text_size = 10,
-        y_axis_text_size = 10,
-        facet_ncol       = 3
+      yp_vars          = "avg_deal_value",
+      combo            = FALSE,
+      facet            = TRUE,
+      x_axis_text_size = 9,
+      facet_ncol       = 3
     )
+} %>% 
+    ggsave(filename = "../png/avg_deal_value_trend_emp_size.png", width = 12, height = 6)
 
-# * Average Deal Value Trend (Regional Office) ----
-get_metrics_trend_data_prepped(
+# 9.2.3 Regional Office ----
+{
+  get_metrics_trend_data_prepped(
     data         = crm_usa_tbl,
     segment_name = "regional_office"
-) %>% 
+  ) %>% 
     get_metrics_trend_combo_plot(
-        yp_vars          = "avg_deal_value",
-        combo            = FALSE,
-        facet            = TRUE,
-        x_axis_text_size = 10,
-        y_axis_text_size = 10,
-        facet_ncol       = 3
+      yp_vars          = "avg_deal_value",
+      combo            = FALSE,
+      facet            = TRUE,
+      x_axis_text_size = 9,
+      facet_ncol       = 3
     )
+} %>% 
+    ggsave(filename = "../png/avg_deal_value_trend_reg_office.png", width = 12, height = 3)
     
 
-# Deal Event Value ----
+# 9.3 Deal Event Value ----
 
-# * Sector ----
-get_metrics_trend_data_prepped(
+# 9.3.1 Sector ----
+{
+  get_metrics_trend_data_prepped(
     data         = crm_usa_tbl,
     segment_name = "sector"
-) %>% 
+  ) %>% 
     get_metrics_trend_combo_plot(
-        yp_vars          = "deal_event_value",
-        combo            = FALSE,
-        facet            = TRUE,
-        x_axis_text_size = 10,
-        y_axis_text_size = 10,
-        facet_ncol       = 5
+      yp_vars          = "deal_event_value",
+      combo            = FALSE,
+      facet            = TRUE,
+      x_axis_text_size = 9,
+      facet_ncol       = 5
     ) + 
     labs(
-        title = "Deal Event Value Trend (by Sector)",
-        y = "Deal Event Value ($)\n"
+      title = "Deal Event Value Trend (by Sector)",
+      y = "Deal Event Value ($)\n"
     )
+} %>% 
+    ggsave(filename = "../png/deal_event_value_trend_sector.png", width = 14, height = 6)
 
-# * Employee Size ----
-get_metrics_trend_data_prepped(
+# 9.3.2 Employee Size ----
+{
+  get_metrics_trend_data_prepped(
     data         = crm_usa_tbl,
     segment_name = "employee_size"
-) %>% 
+  ) %>% 
     get_metrics_trend_combo_plot(
-        yp_vars          = "deal_event_value",
-        combo            = FALSE,
-        facet            = TRUE,
-        facet_ncol       = 3
+      yp_vars          = "deal_event_value",
+      combo            = FALSE,
+      facet            = TRUE,
+      x_axis_text_size = 9,
+      facet_ncol       = 3
     ) + 
     labs(
-        title = "Deal Event Value Trend (by Employee Size)",
-        y = "Deal Event Value ($)\n"
+      title = "Deal Event Value Trend (by Employee Size)",
+      y = "Deal Event Value ($)\n"
     )
+} %>% 
+    ggsave(filename = "../png/deal_event_value_trend_emp_size.png", width = 12, height = 6)
     
 
-# * Regional Office ----
-get_metrics_trend_data_prepped(
+# 9.3.3 Regional Office ----
+{
+  get_metrics_trend_data_prepped(
     data         = crm_usa_tbl,
     segment_name = "regional_office"
-) %>% 
+  ) %>% 
     get_metrics_trend_combo_plot(
-        yp_vars          = "deal_event_value",
-        combo            = FALSE,
-        facet            = TRUE,
-        facet_ncol       = 3
+      yp_vars          = "deal_event_value",
+      combo            = FALSE,
+      facet            = TRUE,
+      x_axis_text_size = 9,
+      facet_ncol       = 3
     ) + 
     labs(
-        title = "Deal Event Value Trend (by Regional Office)",
-        y = "Deal Event Value ($)\n"
+      title = "Deal Event Value Trend (by Regional Office)",
+      y = "Deal Event Value ($)\n"
     )
+} %>% 
+    ggsave(filename = "../png/deal_event_value_trend_reg_office.png", width = 12, height = 3)
     
 
 # *************************************************************************
