@@ -643,6 +643,7 @@ sales_agent_metrics_category_tbl <- sales_agent_metrics_score_tbl %>%
 sales_agent_metrics_category_tbl %>% count(score_category)
 
 
+
 # 10.2 Performance Categories GT Tables ----
 
 # 10.2.1 Top Performers GT Table ----
@@ -682,6 +683,7 @@ sales_agent_metrics_category_tbl %>%
     gtsave_extra(filename = "../png/low_performers.png", zoom = 2)
 
 
+
 # 10.3 Hypothesize Performance Drivers ----
 
 # 10.3.1 Sales Agent by Tenure ----
@@ -703,22 +705,34 @@ sales_agent_tenure_tbl <- crm_usa_tbl %>%
         by = "sales_agent"
     )
 
+# 10.3.2 Sales Agent Tenure GT ----
 sales_agent_tenure_tbl %>% 
     arrange(desc(combined_score))  %>% 
     get_gt_table(
-        title                = "Sales Agent Tenure",
+        title                = "Sales Agent Tenure (Days)",
         green_format_column  = "tenure_length"
     ) %>% 
-    cols_width(columns = everything() ~ px(170))
+    cols_width(columns = everything() ~ px(170)) %>% 
+    gtsave_extra(filename = "../png/sales_agent_tenure.png", zoom = 2)
 
+# 10.3.3 Sales Agent Average Tenure GT ----
 sales_agent_tenure_tbl %>% 
     summarize(
         avg_tenure_length = mean(tenure_length, na.rm = TRUE),
         .by = c(score_category)
     ) %>% 
-    arrange(desc(score_category))
+    arrange(desc(score_category)) %>% 
+    get_gt_table(
+        title = "Sales Agent Average Tenure (Days)"
+    ) %>%
+    cols_width(columns = everything() ~ px(170)) %>%
+    gtsave_extra(filename = "../png/sales_agent_avg_tenure.png", zoom = 2)
+  
 
-# * Sales Agent by Manager ----
+
+# 10.4 Sales Agent by Manager ----
+
+# 10.4.1 Count of Sales Agent by Manager GT ----
 sales_agent_metrics_category_tbl %>% 
     summarise(
         sales_agents = n_distinct(sales_agent),
@@ -734,9 +748,10 @@ sales_agent_metrics_category_tbl %>%
         orange_format_column = "Mid Performers",
         red_format_column = "Low Performers"
     ) %>% 
-    cols_width(columns = everything() ~ px(170))
+    cols_width(columns = everything() ~ px(170)) %>% 
+    gtsave_extra(filename = "../png/sales_agent_by_manager.png", zoom = 2)
 
-# * Sales Agent by Regional Office ----
+# 10.4.2 Count of Sales Agent by Regional Office GT ----
 sales_agent_metrics_category_tbl %>% 
     summarise(
         sales_agents = n_distinct(sales_agent),
@@ -752,7 +767,8 @@ sales_agent_metrics_category_tbl %>%
         orange_format_column = "Mid Performers",
         red_format_column = "Low Performers"
     ) %>% 
-    cols_width(columns = everything() ~ px(170))
+    cols_width(columns = everything() ~ px(170)) %>% 
+    gtsave_extra(filename = "../png/sales_agent_by_reg_office.png", zoom = 2)
 
 
 # *************************************************************************
