@@ -31,6 +31,10 @@ library(webshot2)
 # Source Functions ----
 source("../functions/utils_data_wrangling.R")
 source("../functions/utils_gt_table.R")
+source("../functions/utils_plotting.R")
+
+# Save Path ----
+png_path <- "../png/"
 
 
 # *************************************************************************
@@ -389,223 +393,36 @@ segments_metrics_tbl[[3]] %>%
 
 
 # *************************************************************************
-#9.0 METRICS TREND ANALYSIS ----
+# 9.0 METRICS TREND ANALYSIS ----
 # *************************************************************************
 
-# Close Rate, Average Deal Value & Deal Event Value ----
-segment_name <- "sector"
-segment_name_sym <- rlang::ensym(segment_name)
-group_col <- "engage_month"
-group_col_sym <- rlang::ensym(group_col)
-
-group_by_cols <- c("engage_month", "segment_name")
-group_cols_sym <- rlang::enquo(group_by_cols)
-
-metrics_trend_tbl <- crm_usa_tbl %>% 
-    summarise(
-        deals_total = n_distinct(opportunity_id),
-        deals_closed = n_distinct(
-            opportunity_id[
-                time_to_close_bin %in% c("0 - 30 days", "31 - 60 days") & deal_stage == "Won"
-            ]
-        ),
-        total_close_value = sum(
-            close_value[
-                time_to_close_bin %in% c("0 - 30 days", "31 - 60 days") & deal_stage == "Won"
-            ]
-        ),
-        .by = c(!!group_col_sym, !!segment_name_sym)
-    ) %>% 
-    arrange(engage_month) %>%
-    mutate(deals_close_rate = deals_closed / deals_total, .after = deals_closed) %>% 
-    mutate(avg_deal_value = total_close_value / deals_closed) %>%
-    mutate(deal_event_value = deals_close_rate * avg_deal_value) %>%
-    drop_na()
-
-
-get_metrics_trend_data_prepped <- function(data, group_column = "engage_month", segment_name) {
-    
-    # rlang setup
-    group_column_sym <- rlang::ensym(group_column)
-    segment_name_sym <- rlang::ensym(segment_name)
-    
-    # data aggregation
-    if (!missing(segment_name)) {
-        grouped_tbl <- data %>% 
-            group_by(!!group_column_sym, !!segment_name_sym)
-    } else {
-        grouped_tbl <- data %>% 
-            group_by(!!group_column_sym)
-    }
-    
-    # metrics trend table
-    metrics_trend_tbl <- grouped_tbl %>%
-        summarise(
-            deals_total = n_distinct(opportunity_id),
-            deals_closed = n_distinct(
-                opportunity_id[
-                    time_to_close_bin %in% c("0 - 30 days", "31 - 60 days") & deal_stage == "Won"
-                ], na.rm = TRUE
-            ),
-            total_close_value = sum(
-                close_value[
-                    time_to_close_bin %in% c("0 - 30 days", "31 - 60 days") & deal_stage == "Won"
-                ], na.rm = TRUE
-            ),
-            avg_time_to_close = mean(
-                time_to_close[
-                    time_to_close_bin %in% c("0 - 30 days", "31 - 60 days") & deal_stage == "Won"
-                ], na.rm = TRUE
-            )
-        ) %>%
-        ungroup() %>% 
-        mutate(deals_close_rate = deals_closed / deals_total, .after = deals_closed) %>%
-        mutate(avg_deal_value = total_close_value / deals_closed) %>%
-        mutate(deal_event_value = deals_close_rate * avg_deal_value) %>%
-        drop_na()
-    
-    # return
-    return(metrics_trend_tbl)
-    
-}
-
-metrics_trend_tbl <- get_metrics_trend_data_prepped(
-    data = crm_usa_tbl,
-    group_column = "engage_month"
-)
-
-
-
-
-
-# * Plot Metrics Trend ----
-get_metrics_trend_combo_plot <- function(data, x_vars = "engage_month", yp_vars = "deals_total",
-                                         ys_vars = "deals_close_rate", combo = TRUE, facet = FALSE,
-                                         x_axis_text_size = 10, y_axis_text_size = 10, y_axis_label_size = 10,
-                                         plot_title_size = 16, plot_subtitle_size = 14,
-                                         facet_ncol = 4) {
-    
-    # rlang setup
-    x_vars_sym  <- rlang::ensym(x_vars)
-    yp_vars_sym <- rlang::ensym(yp_vars)
-    ys_vars_sym <- rlang::ensym(ys_vars)
-    
-    # combo chart setup
-    max_deals_total <- max(data$deals_total, na.rm = TRUE)
-    
-    if (!combo) {
-        
-        p <- data %>% 
-            ggplot(aes(x = engage_month, y = !!yp_vars_sym)) +
-            geom_line(size = 1.3, color = "orange")+
-            geom_smooth(method = "lm", se = FALSE, color = "blue", size = 0.7, alpha = 0.8) +
-            scale_y_continuous(labels = scales::dollar) 
-            #facet_wrap(vars(!!segment_name_sym))
-    } else {
-        
-        p <- data %>%
-            ggplot(aes(x = !!x_vars_sym)) +
-            geom_bar(aes(y = !!yp_vars_sym, fill = "Total Deals"), stat = "identity") +
-            geom_line(aes(y = !!ys_vars_sym * max_deals_total, group = 1, color = "Close Rate"), size = 1.2) +
-            geom_point(aes(y = !!ys_vars_sym * max_deals_total, color = "Close Rate"), size = 2) +
-            scale_y_continuous(
-                name = "Total Deals",
-                sec.axis = sec_axis(
-                    ~ . / max_deals_total, 
-                    name = "Deal Close Rate (%)",
-                    labels = scales::percent
-                )
-            ) +
-            scale_fill_manual(name = "Metrics", values = c("Total Deals" = "lightgrey")) +
-            scale_color_manual(name = "Metrics", values = c("Close Rate" = "orange"))
-    }
-    
-    # theme
-    p <- p +
-        theme_bw() +
-        #labs(title = title, subtitle = subtitle, x = x_lab, y = ylab) +
-        theme(
-            
-            # axis text
-            axis.text.y = element_text(size = y_axis_text_size, color = "black"),   
-            axis.text.x = element_text(size = x_axis_text_size, color = "black"), 
-            
-            # axis labels
-            axis.title.y = element_text(size = y_axis_label_size, color = "black"),
-            axis.title.x = element_blank(),
-            
-            # plot title size
-            plot.title = element_text(size = plot_title_size, color = "black", face = "bold"),
-            plot.subtitle = element_text(size = plot_subtitle_size, color = "black")
-        )
-        
-    
-    # legend
-    if (!facet) {
-        p <- p + 
-            theme(
-                legend.position = c(0.9, 0.9),  # Position the legend inside the plot at the top right
-                legend.justification = c("right", "top"),  # Anchor point of the legend
-                legend.box.just = "right",  # Justify the legend box at the right
-                legend.margin = margin(t = -10, r = 10, b = 10, l = 10),  # Adjust legend margin if necessary
-                legend.direction = "horizontal",  # Layout legend vertically
-                legend.title = element_blank()
-            )
-    } else {
-        p <- p + theme(legend.position = "none")
-    }
-    
-    # text labels
-    if (!facet) {
-        p <- p + 
-            geom_text(
-                aes(y = deals_close_rate * max_deals_total, label = scales::percent(deals_close_rate, accuracy = 0.1)),
-                hjust = 0.5, vjust = -0.5, size = 4, fontface = "bold", color = "#2c3e50"
-            ) +
-            geom_text(
-                aes(y = deals_total, label = deals_total),
-                hjust = 0.5, vjust = -0.5, size = 4, fontface = "bold", color = "#2c3e50"
-            )
-    }
-    
-    # faceting
-    if (facet) {
-        segment_name <- data[, 2] %>% colnames()
-        segment_name_sym <- rlang::ensym(segment_name)
-        
-        p <- p + 
-            facet_wrap(vars(!!segment_name_sym), ncol = facet_ncol) +
-            theme(strip.text = element_text(size = 12, color = "black", face = "bold"))
-    }
-    
-    # return
-    return(p)
-    
-}
-
-# Total Deals & Deal Close Rate ----
-
-# * Total Deals and Close Rate Trend (Overall) ----
-metrics_trend_tbl %>% 
+# 9.1 Total Deals & Close Rate (Overall) ----
+crm_usa_tbl %>% 
+    get_metrics_trend_data_prepped(group_column = "engage_month") %>% 
     get_metrics_trend_combo_plot(
-        combo = TRUE,
+        combo            = TRUE,
+        facet            = FALSE,
         x_axis_text_size = 10,
         y_axis_text_size = 10
-    )
-
-# * Total Deals and Close Rate Trend (by Sector) ----
+    ) %>% 
+    ggsave(filename = "../png/total_deals_and_close_rate_trend.png", width = 12, height = 6)
+    
+    
+# 9.2 Total Deals & Close Rate (Sector) ----
 get_metrics_trend_data_prepped(
     data         = crm_usa_tbl,
     segment_name = "sector"
 ) %>% 
   get_metrics_trend_combo_plot(
-      combo = TRUE,
-      facet = TRUE,
-      x_axis_text_size = 10,
-      y_axis_text_size = 10
-    )
+      combo            = TRUE,
+      facet            = TRUE,
+      x_axis_text_size = 9,
+      facet_ncol       = 5
+    ) %>% 
+    ggsave(filename = "../png/total_deals_and_close_rate_trend_sector.png", width = 14, height = 6)
+    
 
-# * Total Deals and Close Rate Trend (by Employee Size) ----
+# 9.3 Total Deals & Close Rate (Employee Size) ----
 get_metrics_trend_data_prepped(
     data         = crm_usa_tbl,
     segment_name = "employee_size"
@@ -613,12 +430,13 @@ get_metrics_trend_data_prepped(
   get_metrics_trend_combo_plot(
       combo = TRUE,
       facet = TRUE,
-      x_axis_text_size = 10,
-      y_axis_text_size = 10,
+      x_axis_text_size = 9,
       facet_ncol = 3
-    )
+    ) %>% 
+    ggsave(filename = "../png/total_deals_and_close_rate_trend_empsize.png", width = 12, height = 6)
+    
 
-# * Total Deals and Close Rate Trend (by Regional Office) ----
+# 9.4 Total Deals & Close Rate (Regional Office) ----
 get_metrics_trend_data_prepped(
     data         = crm_usa_tbl,
     segment_name = "regional_office"
@@ -626,10 +444,10 @@ get_metrics_trend_data_prepped(
     get_metrics_trend_combo_plot(
         combo = TRUE,
         facet = TRUE,
-        x_axis_text_size = 10,
-        y_axis_text_size = 10,
-        facet_ncol = 1
-    )
+        x_axis_text_size = 9,
+        facet_ncol = 3
+    ) %>% 
+    ggsave(filename = "../png/total_deals_and_close_rate_trend_office.png", width = 12, height = 3)
 
 # Average Deal Value ----
 
@@ -638,16 +456,10 @@ get_metrics_trend_data_prepped(
     data         = crm_usa_tbl,
     segment_name = "sector"
 ) %>% 
-    get_metrics_trend_combo_plot(
-        yp_vars          = "avg_deal_value",
-        combo            = FALSE,
-        facet            = TRUE,
-        x_axis_text_size = 10,
-        y_axis_text_size = 10
-    ) + 
+    get_metrics_trend_combo_plot(yp_vars = "avg_deal_value") + 
     labs(
         title = "Average Deal Value Trend (by Sector)",
-        y = "Average Deal Value ($)\n"
+        y     = "Average Deal Value ($)\n"
     )
 
 # * Average Deal Value Trend (Employee Size) ----
@@ -734,10 +546,10 @@ get_metrics_trend_data_prepped(
     
 
 # *************************************************************************
-# 9.0 METRICS ANALYSIS (SALES AGENTS) ----
+# 10.0 METRICS ANALYSIS (SALES AGENTS) ----
 # *************************************************************************
 
-# * Average Deal Value (Sales Reps) ----
+# 10.1 Sales Agents Metrics Data ----
 sales_agent_metrics_tbl <- crm_usa_tbl %>% 
     summarise(
         deals_total = n_distinct(opportunity_id),
@@ -770,25 +582,58 @@ sales_agent_metrics_tbl <- crm_usa_tbl %>%
     ) %>% 
     select(sales_agent, manager, regional_office, everything())
 
-# * Get Quantiles ----
+# 10.2 Get Quantiles ----
 sales_agent_metrics_score_tbl <- sales_agent_metrics_tbl %>% 
     get_quantiles(c("deals_close_rate", "avg_deal_value", "avg_time_to_close")) %>% 
-    mutate(total_score = deals_close_rate_qtile + avg_deal_value_qtile + avg_time_to_close_qtile) %>% 
+    mutate(combined_score = deals_close_rate_qtile + avg_deal_value_qtile + avg_time_to_close_qtile) %>% 
     select(-c(total_close_value, deals_total, deals_closed)) 
 
 sales_agent_metrics_score_tbl %>% glimpse()
 
-# * Get Sales Agent Performance Categories ----
+# 10.3 Sales Agent Performance Categories ----
 threshold <- quantile(sales_agent_metrics_score_tbl$total_score, probs = c(1/3, 2/3))
 
 sales_agent_metrics_category_tbl <- sales_agent_metrics_score_tbl %>% 
     mutate(score_category = case_when(
-        total_score <= threshold[1] ~ "Low Performers",
-        total_score > threshold[1] & total_score <= threshold[2] ~ "Mid Performers",
-        total_score > threshold[2] ~ "Top Performers"
+        combined_score <= threshold[1] ~ "Low Performers",
+        combined_score > threshold[1] & combined_score <= threshold[2] ~ "Mid Performers",
+        combined_score > threshold[2] ~ "Top Performers"
     ))
 
 sales_agent_metrics_category_tbl %>% count(score_category)
+
+# 10.4 Top Performers GT Table ----
+sales_agent_metrics_category_tbl %>% 
+    filter(score_category == "Top Performers") %>% 
+    select(-c(ends_with("qtile"))) %>%
+    arrange(desc(combined_score)) %>% 
+    get_gt_table(
+        title                = "Top Performers",
+        green_format_column  = "combined_score"
+    ) %>% 
+    cols_width(columns = everything() ~ px(170)) 
+
+# 10.5 Mid Performers GT Table ----
+sales_agent_metrics_category_tbl %>% 
+    filter(score_category == "Mid Performers") %>% 
+    select(-c(ends_with("qtile"))) %>%
+    arrange(desc(combined_score)) %>% 
+    get_gt_table(
+        title                = "Mid Performers",
+        green_format_column  = "combined_score"
+    ) %>% 
+    cols_width(columns = everything() ~ px(170)) 
+
+# 10.6 Low Performers GT Table ----
+sales_agent_metrics_category_tbl %>% 
+    filter(score_category == "Low Performers") %>% 
+    select(-c(ends_with("qtile"))) %>%
+    arrange(desc(combined_score)) %>% 
+    get_gt_table(
+        title                = "Low Performers",
+        green_format_column  = "combined_score"
+    ) %>% 
+    cols_width(columns = everything() ~ px(170)) 
 
 # * Sales Agent by Tenure ----
 sales_agent_tenure_tbl <- crm_usa_tbl %>% 
