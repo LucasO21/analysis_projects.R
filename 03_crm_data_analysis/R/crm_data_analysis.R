@@ -810,7 +810,8 @@ metrics_product_and_sales_agent_tbl %>%
     cols_width(
         columns = c("Sales Agent", "Combined Score",  "Score Category", "Gtx Plus Basic") 
         ~ px(175)
-    )
+    ) %>% 
+    gtsave_extra(filename = "../png/top_bottom_3_sales_agents.png", zoom = 2)
 
 
 
@@ -819,79 +820,4 @@ metrics_product_and_sales_agent_tbl %>%
 # REPREX ----
 # *************************************************************************
 
-# segments_time_to_close %>% 
-#     gt(rowname_col = "name") %>% 
-#     tab_row_group(
-#         label = md("**Sector**"),
-#         rows = category == "sector",
-#         id = "sector"
-#     ) %>% 
-#     tab_row_group(
-#         label = md("**Employee Size**"),
-#         rows = category == "employee_size",
-#         id = "employee_size"
-#     ) %>%
-#     tab_row_group(
-#         label = md("**Regional Office**"),
-#         rows = category == "regional_office",
-#         id = "regional_office"
-#     ) %>% 
-#     row_group_order(groups = c("sector", "employee_size", "regional_office")) %>% 
-#     gt_theme_guardian() %>% 
-#     fmt_number(columns = everything(), decimals = 1) 
-
-
-# Load necessary library
-library(gt)
-
-# Sample data
-data <- tribble(
-    ~group, ~item, ~value,
-    "Fruit", "Apple", 10,
-    "Fruit", "Orange", 12,
-    "Vegetable", "Carrot", 5,
-    "Vegetable", "Onion", 7
-)
-
-# Create a gt table
-gt_table <- data %>%
-    gt() %>%
-    cols_label(
-        group = "Food Group",
-        item = "Food Item",
-        value = "Quantity"
-    ) %>%
-    tab_spanner(
-        label = "Produce",
-        columns = vars(group, item)
-    )
-
-# Add borders to the spanner header
-gt_table <- gt_table %>%
-    tab_style(
-        style = list(
-            cell_borders(
-                sides = "bottom", 
-                color = "blue",  
-                weight = px(2)
-            )
-        ),
-        locations = cells_column_spanners(spanners = "Produce")
-    )
-
-# Add borders to the columns under the spanner
-gt_table <- gt_table %>%
-    tab_style(
-        style = list(
-            cell_borders(
-                sides = "bottom", # Bottom border for clarity in example, adjust as needed
-                color = "blue",
-                weight = px(2)
-            )
-        ),
-        locations = cells_column_spanners(spanners = c("Produce"))
-    )
-
-# Print the table
-gt_table
 
