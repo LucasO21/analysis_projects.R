@@ -330,8 +330,7 @@ crm_usa_tbl %>%
     )+
     labs(
         title = str_glue("Time To Close Analysis by {segment_name_caps}"), 
-        x = NULL, 
-        y = "Count"
+        x = NULL
     )
     
 # 8.2 Metrics by Segment Tibble List ----
