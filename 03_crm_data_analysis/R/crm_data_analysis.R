@@ -33,8 +33,6 @@ source("../functions/utils_data_wrangling.R")
 source("../functions/utils_gt_table.R")
 source("../functions/utils_plotting.R")
 
-# Save Path ----
-png_path <- "../png/"
 
 
 # *************************************************************************
@@ -102,7 +100,7 @@ crm_tbl <- pipeline_tbl %>%
         employees > 2500 & employees <= 5000  ~ "2051 - 5000",
         employees > 5000 & employees <= 7500  ~ "5001 - 7500",
         employees > 7500 & employees <= 10000 ~ "7501 - 10000",
-        employees > 200 ~ "10000 +"
+        TRUE                                  ~ "10000 +"
     )) %>% 
     mutate(employee_size = as.factor(employee_size)) %>%
     mutate(
@@ -179,6 +177,7 @@ crm_usa_tbl %>%
     map(unique)
 
 # 4.5 Skim Data (to get data summary) ----
+skimr::skim(crm_usa_tbl)
 
 
 # *************************************************************************
@@ -196,22 +195,32 @@ crm_usa_tbl %>%
 segments <- c("sector", "employee_size", "regional_office")
 
 # 7.2 Accounts, Deals & Revenue by Segments List ----
-segments_revenue_tbl <- segments %>% map(function(segment) {
+segments_revenue_tbl <- segments %>% 
+  map(function(segment) {
     crm_usa_tbl %>% 
-        summarise(
-            accounts    = n_distinct(account),
-            deals       = n_distinct(opportunity_id),
-            avg_revenue = mean(revenue, na.rm = TRUE),
-            .by = c(segment)
-        ) %>% 
-        arrange(desc(avg_revenue)) %>% 
-        mutate(accounts_pct = accounts / sum(accounts)) %>%
-        mutate(deals_pct    = deals / sum(deals)) %>%
-        drop_na()
+      group_by(!!rlang::ensym(segment), account) %>%
+      summarise(
+        accounts         = n_distinct(account),
+        deals            = n_distinct(opportunity_id),
+        avg_rev_per_acct = mean(revenue, na.rm = TRUE), 
+        .groups          = 'drop'
+      ) %>% 
+      group_by(!!rlang::ensym(segment)) %>%
+      summarise(
+          accounts    = sum(accounts),
+          deals       = sum(deals),
+          avg_revenue = mean(avg_rev_per_acct)
+      ) %>% 
+      ungroup() %>% 
+      arrange(desc(avg_revenue)) %>% 
+      mutate(accounts_pct = accounts / sum(accounts)) %>%
+      mutate(deals_pct    = deals / sum(deals)) %>%
+      drop_na()
 })
 
 # 7.3 Average Time To Close by Segments List ----
-segments_time_to_close <- segments %>% map(function(segment) {
+segments_time_to_close <- segments %>% 
+  map(function(segment) {
     crm_usa_tbl %>% 
         summarise(
             avg_time_to_close = mean(time_to_close, na.rm = TRUE),
@@ -259,22 +268,25 @@ segments_revenue_tbl[[3]] %>%
     gtsave_extra(filename = "../png/segmentation_analysis_reg_office.png", zoom = 2)
 
 # 7.7 Time to Close by Sector (GT Table) ----
-ttc_sector_tbl <- segments_time_to_close[[1]] %>% 
+segments_time_to_close[[1]] %>% 
     get_gt_table(title = "Avg Time to Close (Sector)") %>% 
     cols_width(everything() ~ px(250)) %>% 
-    fmt_number(columns = everything(), decimals = 1)
+    fmt_number(columns = everything(), decimals = 1) %>% 
+    gtsave_extra(filename = "../png/time_to_close_sector.png", zoom = 2)
 
 # 7.8 Time to Close by Employee Size (GT Table) ----
-ttc_employee_size_tbl <- segments_time_to_close[[2]] %>%
+segments_time_to_close[[2]] %>%
     get_gt_table(title = "Avg Time to Close (Emp Size)") %>% 
     cols_width(everything() ~ px(250)) %>% 
-    fmt_number(columns = everything(), decimals = 1)
+    fmt_number(columns = everything(), decimals = 1) %>% 
+    gtsave_extra(filename = "../png/time_to_close_emp_size.png", zoom = 2)
 
 # 7.9 Time to Close by Regional Office (GT Table) ----
-ttc_regional_office_tbl <- segments_time_to_close[[3]] %>%
+segments_time_to_close[[3]] %>%
     get_gt_table(title = "Avg Time to Close (Regional Office)") %>% 
     cols_width(everything() ~ px(250)) %>% 
-    fmt_number(columns = everything(), decimals = 1)
+    fmt_number(columns = everything(), decimals = 1) %>% 
+    gtsave_extra(filename = "../png/time_to_close_reg_office.png", zoom = 2)
 
 
 
