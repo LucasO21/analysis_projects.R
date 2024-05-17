@@ -587,7 +587,9 @@ get_metrics_trend_data_prepped(
 # 10.0 METRICS ANALYSIS (SALES AGENTS) ----
 # *************************************************************************
 
-# 10.1 Sales Agents Metrics Data ----
+# 10.1 Categorize Sales Agents Performance ----
+
+# 10.1.1 Sales Agents Metrics Data ----
 sales_agent_metrics_tbl <- crm_usa_tbl %>% 
     summarise(
         deals_total = n_distinct(opportunity_id),
@@ -620,7 +622,7 @@ sales_agent_metrics_tbl <- crm_usa_tbl %>%
     ) %>% 
     select(sales_agent, manager, regional_office, everything())
 
-# 10.2 Get Quantiles ----
+# 10.1.2 Get Quantiles ----
 sales_agent_metrics_score_tbl <- sales_agent_metrics_tbl %>% 
     get_quantiles(c("deals_close_rate", "avg_deal_value", "avg_time_to_close")) %>% 
     mutate(combined_score = deals_close_rate_qtile + avg_deal_value_qtile + avg_time_to_close_qtile) %>% 
@@ -628,8 +630,8 @@ sales_agent_metrics_score_tbl <- sales_agent_metrics_tbl %>%
 
 sales_agent_metrics_score_tbl %>% glimpse()
 
-# 10.3 Sales Agent Performance Categories ----
-threshold <- quantile(sales_agent_metrics_score_tbl$total_score, probs = c(1/3, 2/3))
+# 10.1.3 Sales Agent Performance Categories ----
+threshold <- quantile(sales_agent_metrics_score_tbl$combined_score, probs = c(1/3, 2/3))
 
 sales_agent_metrics_category_tbl <- sales_agent_metrics_score_tbl %>% 
     mutate(score_category = case_when(
@@ -640,40 +642,49 @@ sales_agent_metrics_category_tbl <- sales_agent_metrics_score_tbl %>%
 
 sales_agent_metrics_category_tbl %>% count(score_category)
 
-# 10.4 Top Performers GT Table ----
+
+# 10.2 Performance Categories GT Tables ----
+
+# 10.2.1 Top Performers GT Table ----
 sales_agent_metrics_category_tbl %>% 
     filter(score_category == "Top Performers") %>% 
-    select(-c(ends_with("qtile"))) %>%
+    select(-c(score_category, ends_with("qtile"))) %>%
     arrange(desc(combined_score)) %>% 
     get_gt_table(
         title                = "Top Performers",
         green_format_column  = "combined_score"
     ) %>% 
-    cols_width(columns = everything() ~ px(170)) 
+    cols_width(columns = everything() ~ px(170)) %>% 
+    gtsave_extra(filename = "../png/top_performers.png", zoom = 2)
 
-# 10.5 Mid Performers GT Table ----
+# 10.2.2 Mid Performers GT Table ----
 sales_agent_metrics_category_tbl %>% 
     filter(score_category == "Mid Performers") %>% 
-    select(-c(ends_with("qtile"))) %>%
+  select(-c(score_category, ends_with("qtile"))) %>%
     arrange(desc(combined_score)) %>% 
     get_gt_table(
         title                = "Mid Performers",
-        green_format_column  = "combined_score"
+        orange_format_column  = "combined_score"
     ) %>% 
-    cols_width(columns = everything() ~ px(170)) 
+    cols_width(columns = everything() ~ px(170)) %>% 
+    gtsave_extra(filename = "../png/mid_performers.png", zoom = 2)
 
-# 10.6 Low Performers GT Table ----
+# 10.2.3 Low Performers GT Table ----
 sales_agent_metrics_category_tbl %>% 
     filter(score_category == "Low Performers") %>% 
-    select(-c(ends_with("qtile"))) %>%
+  select(-c(score_category, ends_with("qtile"))) %>%
     arrange(desc(combined_score)) %>% 
     get_gt_table(
         title                = "Low Performers",
-        green_format_column  = "combined_score"
+        red_format_column  = "combined_score"
     ) %>% 
-    cols_width(columns = everything() ~ px(170)) 
+    cols_width(columns = everything() ~ px(170)) %>% 
+    gtsave_extra(filename = "../png/low_performers.png", zoom = 2)
 
-# 10.7 Sales Agent by Tenure ----
+
+# 10.3 Hypothesize Performance Drivers ----
+
+# 10.3.1 Sales Agent by Tenure ----
 sales_agent_tenure_tbl <- crm_usa_tbl %>% 
     select(sales_agent, engage_date) %>% 
     summarise(
