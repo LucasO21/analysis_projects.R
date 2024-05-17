@@ -635,7 +635,7 @@ sales_agent_metrics_category_tbl %>%
     ) %>% 
     cols_width(columns = everything() ~ px(170)) 
 
-# * Sales Agent by Tenure ----
+# 10.7 Sales Agent by Tenure ----
 sales_agent_tenure_tbl <- crm_usa_tbl %>% 
     select(sales_agent, engage_date) %>% 
     summarise(
@@ -650,11 +650,17 @@ sales_agent_tenure_tbl <- crm_usa_tbl %>%
     ) %>% 
     left_join(
         sales_agent_metrics_category_tbl %>% 
-            select(sales_agent, total_score, score_category),
+            select(sales_agent, combined_score, score_category),
         by = "sales_agent"
     )
 
-sales_agent_tenure_tbl %>% arrange(desc(total_score)) %>% print(n = 40)
+sales_agent_tenure_tbl %>% 
+    arrange(desc(combined_score))  %>% 
+    get_gt_table(
+        title                = "Sales Agent Tenure",
+        green_format_column  = "tenure_length"
+    ) %>% 
+    cols_width(columns = everything() ~ px(170))
 
 sales_agent_tenure_tbl %>% 
     summarize(
@@ -672,7 +678,14 @@ sales_agent_metrics_category_tbl %>%
     pivot_wider(names_from = score_category, values_from = sales_agents, values_fill = 0) %>% 
     mutate(total_agents = `Low Performers` + `Mid Performers` + `Top Performers`) %>% 
     select(manager, `Top Performers`, `Mid Performers`, `Low Performers`, total_agents) %>% 
-    arrange(desc(`Top Performers`))
+    arrange(desc(`Top Performers`)) %>% 
+    get_gt_table(
+        title = "Sales Agent by Manager",
+        green_format_column = "Top Performers",
+        orange_format_column = "Mid Performers",
+        red_format_column = "Low Performers"
+    ) %>% 
+    cols_width(columns = everything() ~ px(170))
 
 # * Sales Agent by Regional Office ----
 sales_agent_metrics_category_tbl %>% 
@@ -683,18 +696,28 @@ sales_agent_metrics_category_tbl %>%
     pivot_wider(names_from = score_category, values_from = sales_agents, values_fill = 0) %>% 
     mutate(Total = `Low Performers` + `Mid Performers` + `Top Performers`) %>% 
     select(regional_office, `Top Performers`, `Mid Performers`, `Low Performers`, Total) %>% 
-    arrange(desc(`Top Performers`))
+    arrange(desc(`Top Performers`)) %>% 
+    get_gt_table(
+        title = "Sales Agent by Regional Office",
+        green_format_column = "Top Performers",
+        orange_format_column = "Mid Performers",
+        red_format_column = "Low Performers"
+    ) %>% 
+    cols_width(columns = everything() ~ px(170))
 
 
 # *************************************************************************
-# METRICS BY PRODUCTS ----
+# 11.0 METRICS BY PRODUCTS ----
 # *************************************************************************
+
+# 11.1 Metrics by Products Data ----
 metrics_products_tbl <- get_metrics_trend_data_prepped(
-    data = crm_usa_tbl,
+    data         = crm_usa_tbl,
     group_column = "product"
 ) %>% 
     arrange(desc(deal_event_value))
 
+# 11.2 Products by Sales Agent ----
 metrics_product_and_sales_agent_tbl <- crm_usa_tbl %>% 
     filter( time_to_close_bin %in% c("0 - 30 days", "31 - 60 days") & deal_stage == "Won") %>% 
     summarise(
@@ -702,19 +725,27 @@ metrics_product_and_sales_agent_tbl <- crm_usa_tbl %>%
         .by = c(sales_agent, product)
     ) %>% 
     left_join(
-        sales_agent_metrics_category_tbl %>% select(sales_agent, total_score, score_category),
+        sales_agent_metrics_category_tbl %>% select(sales_agent, combined_score, score_category),
         by = "sales_agent"
     ) %>% 
-    arrange(desc(total_score)) %>% 
+    arrange(desc(combined_score)) %>% 
     pivot_wider(names_from = product, values_from = deals_total, values_fill = 0)
 
+# 11.3 Top 3 & Bottom 3 Sales Agents Comparison ----
 metrics_product_and_sales_agent_tbl %>%
     head(3) %>% 
     bind_rows(
         metrics_product_and_sales_agent_tbl %>% 
             tail(3)
     ) %>% 
-    mutate(Total = rowsum(., group = "row")$row)
+    get_gt_table(
+        title = "Top 3 & Bottom 3 Sales Agents Comparison",
+        subtitle = "Number of Closed by Product"
+    ) %>%
+    cols_width(
+        columns = c("Sales Agent", "Combined Score",  "Score Category", "Gtx Plus Basic") 
+        ~ px(175)
+    )
 
 
 
