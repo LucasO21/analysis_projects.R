@@ -109,6 +109,52 @@ get_gt_table_with_spanner <- function(gt_table) {
 }
 
 
+# GT Table Settings for "VS Company" Tables ----
+get_gt_table_vs_company <- function(gt_table, table_font_size = px(14),
+                                    segment_name = "employee_size") {
+    
+    gt <- gt_table %>% 
+        tab_options(table.font.size = table_font_size) %>% 
+            cols_width(everything() ~ px(100)) %>%  
+            cols_width(
+                columns = c("Deals Total", "Deals Close Rate", "Avg Deal Value") ~ px(90)
+            ) %>%
+            cols_label(
+                `Total Close Value` = "Total Close $",
+                `Deals Close Rate` = "Close Rate",
+                `Avg Deal Value` = "Avg Deal $",
+                `Deal Event Value` = "Deal Event $"
+            )
+    if (segment_name == "employee_size") {
+        gt <- gt %>% cols_label(`Employee Size` = "Emp Size")
+    } else if (segment_name == "regional_office") {
+        gt <- gt %>% cols_label(`Regional Office` = "Office")
+    }
+    
+    gt <- gt %>%
+            tab_source_note("Total Close $ = Total Value of Closed Deals") %>% 
+            tab_source_note("Close Rate = Deal Close Rate [Deals Closed / Total Deals]") %>%
+            tab_source_note("Avg Deal $ = Average Deal Value [Total Deal Value / Closed Deals]") %>%
+            tab_source_note("Deal Event $ = Deal Event Value [Close Rate * Avg Deal Value]")
+    
+    return(gt)
+}
+
+
+get_gt_table_sales_agents_by_manager_custom <- function(gt_table) {
+    
+    gt <- gt_table %>% 
+        fmt_number(columns = c("Avg Time To Close"), decimals = 2) %>%
+        cols_align(align = "left", columns = c("Manager", "Regional Office")) %>% 
+        tab_options(table.font.size = 15) %>% 
+        cols_label(
+            `Regional Office` = "Office",
+        ) %>% 
+        cols_width(columns = c("Sales Agent", "Manager") ~ px(160)) %>% 
+        cols_width(columns = "Regional Office" ~ px(70))
+    
+    return(gt)
+}
 
 
 

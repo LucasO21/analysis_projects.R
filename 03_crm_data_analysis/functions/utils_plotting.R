@@ -72,7 +72,10 @@ get_metrics_trend_plot <- function(data, x_vars = "engage_month", yp_vars = "dea
                 legend.title = element_blank()
             )
     } else {
-        p <- p + theme(legend.position = "none")
+        p <- p + 
+            #theme(legend.position = "none")+
+            theme(legend.position = "bottom") + 
+            theme(legend.title = element_blank())
     }
     
     # text labels

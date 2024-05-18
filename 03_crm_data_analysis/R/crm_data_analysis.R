@@ -12,6 +12,7 @@
 
 
 # *************************************************************************
+# **** ---
 # 1.0 SETUP ----
 # *************************************************************************
 
@@ -37,6 +38,7 @@ source("../functions/utils_plotting.R")
 
 
 # *************************************************************************
+# **** ----
 # 2.0 LOAD DATA ----
 # *************************************************************************
 
@@ -81,6 +83,7 @@ teams_tbl %>% duplicated() %>% sum()
 
 
 # *************************************************************************
+# **** ----
 # 3.0 MERGE DATA ----
 # *************************************************************************
 
@@ -129,6 +132,8 @@ crm_tbl <- pipeline_tbl %>%
     
     # fix column values
     mutate(sector = ifelse(sector == "technolgy", "technology", sector)) %>%
+    mutate(sector = ifelse(sector == "telecommunications", "telecom", sector)) %>%
+    mutate(sector = sector %>% str_to_title()) %>%
     mutate(revenue = revenue * 1000000) %>%
     
     # drop unwanted columns
@@ -140,6 +145,7 @@ crm_tbl %>% glimpse()
 crm_tbl %>% count(employee_size, sort = TRUE) %>% mutate(prop = n / sum(n))
 crm_tbl %>% count(opportunity_id, sort = TRUE)
 crm_tbl %>% count(deal_stage, sort = TRUE)
+crm_tbl %>% distinct(sector)
     
     
 
@@ -148,6 +154,7 @@ write_csv(crm_tbl, "../data/crm_data/crm_merged_tbl.csv")
 
 
 # *************************************************************************
+# **** ----
 # 4.0 DATA FILTERING ----
 # *************************************************************************
 
@@ -156,6 +163,7 @@ crm_usa_tbl <- crm_tbl %>% filter(office_location == "United States")
 
 
 # *************************************************************************
+# **** ----
 # 5.0 EXPLORATORY DATA ANALYSIS ----
 # *************************************************************************
 
@@ -182,6 +190,7 @@ skimr::skim(crm_usa_tbl)
 
 
 # *************************************************************************
+# **** ----
 # 6.0 SEGMENTATION ----
 # *************************************************************************
 
@@ -189,6 +198,7 @@ skimr::skim(crm_usa_tbl)
 
 
 # *************************************************************************
+# **** ----
 # 7.0 REVENUE ANALYSIS ----
 # *************************************************************************
 
@@ -273,7 +283,7 @@ segments_time_to_close[[1]] %>%
     get_gt_table(title = "Avg Time to Close (Sector)") %>% 
     cols_width(everything() ~ px(250)) %>% 
     fmt_number(columns = everything(), decimals = 1) %>% 
-    gtsave_extra(filename = "../png/time_to_close_sector.png", zoom = 2)
+    gtsave_extra(filename = "../png/time_to_close_sector.png", zoom = 3)
 
 # 7.8 Time to Close by Employee Size (GT Table) ----
 segments_time_to_close[[2]] %>%
@@ -292,6 +302,7 @@ segments_time_to_close[[3]] %>%
 
 
 # *************************************************************************
+# **** ----
 # 8.0 METRICS ANALYSIS ----
 # *************************************************************************
 
@@ -306,33 +317,37 @@ segments_time_to_close[[3]] %>%
 segment_name <- "sector" # change to either "employee_size" or "regional_office" and re-run code below
 segment_name_caps <- segment_name %>% str_replace_all("_", " ") %>% str_to_title()
 
-crm_usa_tbl %>% 
+{
+  crm_usa_tbl %>% 
     select(!!ensym(segment_name), time_to_close_bin) %>% 
     drop_na() %>%
     summarise(
-        count = n(),
-        .by = c(!!ensym(segment_name), time_to_close_bin)
+      count = n(),
+      .by = c(!!ensym(segment_name), time_to_close_bin)
     ) %>% 
     mutate(pct = count / sum(count), .by = !!ensym(segment_name)) %>%
     ggplot(aes(count, !!ensym(segment_name), fill = time_to_close_bin)) +
     geom_col(position = "fill") +
     geom_text(
-        aes(label = scales::percent(pct, accuracy = 0.02)), 
-        position = position_fill(vjust = 0.5)
+      aes(label = scales::percent(pct, accuracy = 0.02)), 
+      position = position_fill(vjust = 0.5)
     ) +
     theme_bw() +
     theme(
-        legend.title = element_blank(),
-        legend.position = "bottom",
-        legend.text = element_text(size = 10),
-        axis.text = element_text(size = 11, color = "black"),
-        plot.title = element_text(size = 16, face = "bold"),
-        plot.subtitle = element_text(size = 14, face = "bold")
+      legend.title = element_blank(),
+      legend.position = "bottom",
+      legend.text = element_text(size = 10),
+      axis.text = element_text(size = 11, color = "black"),
+      plot.title = element_text(size = 16, face = "bold"),
+      plot.subtitle = element_text(size = 14, face = "bold")
     )+
     labs(
-        title = str_glue("Time To Close Analysis by {segment_name_caps}"), 
-        x = NULL
+      title = str_glue("Time To Close Grouped by {segment_name_caps}"), 
+      x = NULL
     )
+} %>% 
+  ggsave(filename = "../png/time_to_close_bins_sector.png", width = 12, height = 8)
+  
     
 # 8.2 Metrics by Segment Tibble List ----
 
@@ -357,110 +372,138 @@ segments_metrics_tbl <- segments %>%
 
 # 8.3 Metrics vs Company (Sector) ----
 segments_metrics_tbl[[1]] %>% 
-    get_metrics_vs_company_data_prepped(
-        crm_data    = crm_usa_tbl, 
-        sort_column = "deal_event_value"
-    ) %>% 
-    get_gt_table(
-        title                = "Metrics Analysis (by Sector)",
-        green_format_column  = "total_close_value",
-        blue_format_column   = "avg_deal_value",
-        orange_format_column = "deal_event_value",
-        red_format_column    = "deals_close_rate"
-    ) %>% 
-    get_gt_table_with_spanner() %>% 
-    gtsave_extra(filename = "../png/metrics_analysis_sector_vs_company.png", zoom = 2) # save as png
+  get_metrics_vs_company_data_prepped(
+      crm_data    = crm_usa_tbl, 
+      sort_column = "deal_event_value"
+  ) %>% 
+  get_gt_table(
+      title                = "Metrics Analysis (by Sector)",
+      green_format_column  = "total_close_value",
+      blue_format_column   = "avg_deal_value",
+      orange_format_column = "deal_event_value",
+      red_format_column    = "deals_close_rate"
+  ) %>% 
+  get_gt_table_with_spanner() %>% 
+  get_gt_table_vs_company(segment_name = "sector") %>% 
+  gtsave_extra(filename = "../png/metrics_analysis_sector_vs_company.png", zoom = 2) # save as png
 
 # 8.4 Metrics vs Company (Employee Size) ----
 segments_metrics_tbl[[2]] %>% 
-    get_metrics_vs_company_data_prepped(
-        crm_data = crm_usa_tbl, 
-        sort_column = "deal_event_value"
-    ) %>% 
-    get_gt_table(
-        title                = "Metrics Analysis (by Employee Size)",
-        green_format_column  = "total_close_value",
-        blue_format_column   = "avg_deal_value",
-        orange_format_column = "deal_event_value",
-        red_format_column    = "deals_close_rate"
-    ) %>% 
-    get_gt_table_with_spanner() %>% 
-    gtsave_extra(filename = "../png/metrics_analysis_emp_size_vs_company.png", zoom = 2) # save as png
+  get_metrics_vs_company_data_prepped(
+      crm_data = crm_usa_tbl, 
+      sort_column = "deal_event_value"
+  ) %>% 
+  get_gt_table(
+      title                = "Metrics Analysis (by Employee Size)",
+      green_format_column  = "total_close_value",
+      blue_format_column   = "avg_deal_value",
+      orange_format_column = "deal_event_value",
+      red_format_column    = "deals_close_rate"
+  ) %>% 
+  get_gt_table_with_spanner() %>% 
+  get_gt_table_vs_company(segment_name = "employee_size") %>% 
+  gtsave_extra(filename = "../png/metrics_analysis_emp_size_vs_company.png", zoom = 2) # save as png
 
 # 8.5 Metrics vs Company (Employee Size) ----
 segments_metrics_tbl[[3]] %>% 
-    get_metrics_vs_company_data_prepped(
-        crm_data = crm_usa_tbl, 
-        sort_column = "deal_event_value"
-    ) %>% 
-    get_gt_table(
-        title                = "Metrics Analysis (by Regional Office)",
-        green_format_column  = "total_close_value",
-        blue_format_column   = "avg_deal_value",
-        orange_format_column = "deal_event_value",
-        red_format_column    = "deals_close_rate"
-    ) %>% 
-    get_gt_table_with_spanner() %>% 
-    gtsave_extra(filename = "../png/metrics_analysis_reg_office_vs_company.png", zoom = 2) # save as png
+  get_metrics_vs_company_data_prepped(
+      crm_data = crm_usa_tbl, 
+      sort_column = "deal_event_value"
+  ) %>% 
+  get_gt_table(
+      title                = "Metrics Analysis (by Regional Office)",
+      green_format_column  = "total_close_value",
+      blue_format_column   = "avg_deal_value",
+      orange_format_column = "deal_event_value",
+      red_format_column    = "deals_close_rate"
+  ) %>% 
+  get_gt_table_with_spanner() %>% 
+  get_gt_table_vs_company(segment_name = "regional_office") %>% 
+  gtsave_extra(filename = "../png/metrics_analysis_reg_office_vs_company.png", zoom = 2) # save as png
 
 
 # *************************************************************************
+# **** ----
 # 9.0 METRICS TREND ANALYSIS ----
 # *************************************************************************
 
 # 9.1 Total Deals & Close Rate ----
 
 # 9.1.1 Overall ----
-crm_usa_tbl %>% 
+{
+  crm_usa_tbl %>% 
     get_metrics_trend_data_prepped(group_column = "engage_month") %>% 
-    get_metrics_trend_combo_plot(
-        combo            = TRUE,
-        facet            = FALSE,
-        x_axis_text_size = 10,
-        y_axis_text_size = 10
-    ) %>% 
+    get_metrics_trend_plot(
+      combo            = TRUE,
+      facet            = FALSE,
+      x_axis_text_size = 10,
+      y_axis_text_size = 10
+    ) +
+    labs(
+      title = "Total Deals & Deal Close Rate Trend (Overall Company)",
+      y     = "Total Deals & Close Rate\n"
+    )
+} %>%
     ggsave(filename = "../png/total_deals_and_close_rate_trend.png", width = 12, height = 6)
     
     
 # 9.1.2 Sector ----
-get_metrics_trend_data_prepped(
+{
+  get_metrics_trend_data_prepped(
     data         = crm_usa_tbl,
     segment_name = "sector"
-) %>% 
-  get_metrics_trend_combo_plot(
+  ) %>% 
+    get_metrics_trend_plot(
       combo            = TRUE,
       facet            = TRUE,
       x_axis_text_size = 9,
       facet_ncol       = 5
-    ) %>% 
+    ) +
+    labs(
+      title = "Total Deals & Deal Close Rate Trend (by Sector)",
+      y     = "Total Deals & Close Rate\n"
+    )
+} %>% 
     ggsave(filename = "../png/total_deals_and_close_rate_trend_sector.png", width = 14, height = 6)
     
 
 # 9.1.3 Employee Size ----
-get_metrics_trend_data_prepped(
+{
+  get_metrics_trend_data_prepped(
     data         = crm_usa_tbl,
     segment_name = "employee_size"
-) %>% 
-  get_metrics_trend_combo_plot(
+  ) %>% 
+    get_metrics_trend_plot(
       combo = TRUE,
       facet = TRUE,
       x_axis_text_size = 9,
       facet_ncol = 3
-    ) %>% 
+    ) +
+    labs(
+      title = "Total Deals & Deal Close Rate Trend (by Employee Size)",
+      y     = "Total Deals & Close Rate\n"
+    )
+} %>% 
     ggsave(filename = "../png/total_deals_and_close_rate_trend_empsize.png", width = 12, height = 6)
     
 
 # 9.1.4 Regional Office ----
-get_metrics_trend_data_prepped(
+{
+  get_metrics_trend_data_prepped(
     data         = crm_usa_tbl,
     segment_name = "regional_office"
-) %>% 
-    get_metrics_trend_combo_plot(
-        combo = TRUE,
-        facet = TRUE,
-        x_axis_text_size = 9,
-        facet_ncol = 3
-    ) %>% 
+  ) %>% 
+    get_metrics_trend_plot(
+      combo = TRUE,
+      facet = TRUE,
+      x_axis_text_size = 9,
+      facet_ncol = 3
+    ) +
+    labs(
+      title = "Total Deals & Deal Close Rate Trend (by Regional Office)",
+      y     = "Total Deals & Close Rate\n"
+    )
+} %>% 
     ggsave(filename = "../png/total_deals_and_close_rate_trend_office.png", width = 12, height = 3)
 
 
@@ -472,7 +515,7 @@ get_metrics_trend_data_prepped(
     data         = crm_usa_tbl,
     segment_name = "sector"
   ) %>% 
-    get_metrics_trend_combo_plot(
+    get_metrics_trend_plot(
       yp_vars = "avg_deal_value",
       combo = FALSE,
       facet = TRUE,
@@ -492,12 +535,16 @@ get_metrics_trend_data_prepped(
     data         = crm_usa_tbl,
     segment_name = "employee_size"
   ) %>% 
-    get_metrics_trend_combo_plot(
+    get_metrics_trend_plot(
       yp_vars          = "avg_deal_value",
       combo            = FALSE,
       facet            = TRUE,
       x_axis_text_size = 9,
       facet_ncol       = 3
+    ) + 
+    labs(
+      title = "Average Deal Value Trend (by Employee Size)",
+      y     = "Average Deal Value ($)\n"
     )
 } %>% 
     ggsave(filename = "../png/avg_deal_value_trend_emp_size.png", width = 12, height = 6)
@@ -508,12 +555,16 @@ get_metrics_trend_data_prepped(
     data         = crm_usa_tbl,
     segment_name = "regional_office"
   ) %>% 
-    get_metrics_trend_combo_plot(
+    get_metrics_trend_plot(
       yp_vars          = "avg_deal_value",
       combo            = FALSE,
       facet            = TRUE,
       x_axis_text_size = 9,
       facet_ncol       = 3
+    )+ 
+    labs(
+      title = "Average Deal Value Trend (by Employee Size)",
+      y     = "Average Deal Value ($)\n"
     )
 } %>% 
     ggsave(filename = "../png/avg_deal_value_trend_reg_office.png", width = 12, height = 3)
@@ -527,7 +578,7 @@ get_metrics_trend_data_prepped(
     data         = crm_usa_tbl,
     segment_name = "sector"
   ) %>% 
-    get_metrics_trend_combo_plot(
+    get_metrics_trend_plot(
       yp_vars          = "deal_event_value",
       combo            = FALSE,
       facet            = TRUE,
@@ -547,7 +598,7 @@ get_metrics_trend_data_prepped(
     data         = crm_usa_tbl,
     segment_name = "employee_size"
   ) %>% 
-    get_metrics_trend_combo_plot(
+    get_metrics_trend_plot(
       yp_vars          = "deal_event_value",
       combo            = FALSE,
       facet            = TRUE,
@@ -568,7 +619,7 @@ get_metrics_trend_data_prepped(
     data         = crm_usa_tbl,
     segment_name = "regional_office"
   ) %>% 
-    get_metrics_trend_combo_plot(
+    get_metrics_trend_plot(
       yp_vars          = "deal_event_value",
       combo            = FALSE,
       facet            = TRUE,
@@ -584,6 +635,7 @@ get_metrics_trend_data_prepped(
     
 
 # *************************************************************************
+# **** ----
 # 10.0 METRICS ANALYSIS (SALES AGENTS) ----
 # *************************************************************************
 
@@ -643,44 +695,43 @@ sales_agent_metrics_category_tbl <- sales_agent_metrics_score_tbl %>%
 sales_agent_metrics_category_tbl %>% count(score_category)
 
 
-
 # 10.2 Performance Categories GT Tables ----
 
 # 10.2.1 Top Performers GT Table ----
 sales_agent_metrics_category_tbl %>% 
-    filter(score_category == "Top Performers") %>% 
-    select(-c(score_category, ends_with("qtile"))) %>%
-    arrange(desc(combined_score)) %>% 
-    get_gt_table(
-        title                = "Top Performers",
-        green_format_column  = "combined_score"
-    ) %>% 
-    cols_width(columns = everything() ~ px(170)) %>% 
-    gtsave_extra(filename = "../png/top_performers.png", zoom = 2)
+  filter(score_category == "Top Performers") %>% 
+  select(-c(score_category, ends_with("qtile"))) %>%
+  arrange(desc(combined_score)) %>% 
+  get_gt_table(
+      title                = "Top Performers",
+      green_format_column  = "combined_score"
+  ) %>% 
+  get_gt_table_sales_agents_by_manager_custom() %>% 
+  gtsave_extra(filename = "../png/top_performers.png", zoom = 2)
 
 # 10.2.2 Mid Performers GT Table ----
 sales_agent_metrics_category_tbl %>% 
-    filter(score_category == "Mid Performers") %>% 
+  filter(score_category == "Mid Performers") %>% 
   select(-c(score_category, ends_with("qtile"))) %>%
-    arrange(desc(combined_score)) %>% 
-    get_gt_table(
-        title                = "Mid Performers",
-        orange_format_column  = "combined_score"
-    ) %>% 
-    cols_width(columns = everything() ~ px(170)) %>% 
-    gtsave_extra(filename = "../png/mid_performers.png", zoom = 2)
+  arrange(desc(combined_score)) %>% 
+  get_gt_table(
+      title                = "Mid Performers",
+      orange_format_column  = "combined_score"
+  ) %>% 
+  get_gt_table_sales_agents_by_manager_custom() %>% 
+  gtsave_extra(filename = "../png/mid_performers.png", zoom = 2)
 
 # 10.2.3 Low Performers GT Table ----
 sales_agent_metrics_category_tbl %>% 
-    filter(score_category == "Low Performers") %>% 
+  filter(score_category == "Low Performers") %>% 
   select(-c(score_category, ends_with("qtile"))) %>%
-    arrange(desc(combined_score)) %>% 
-    get_gt_table(
-        title                = "Low Performers",
-        red_format_column  = "combined_score"
-    ) %>% 
-    cols_width(columns = everything() ~ px(170)) %>% 
-    gtsave_extra(filename = "../png/low_performers.png", zoom = 2)
+  arrange(desc(combined_score)) %>% 
+  get_gt_table(
+      title                = "Low Performers",
+      red_format_column  = "combined_score"
+  ) %>% 
+  get_gt_table_sales_agents_by_manager_custom() %>% 
+  gtsave_extra(filename = "../png/low_performers.png", zoom = 2)
 
 
 
@@ -726,6 +777,7 @@ sales_agent_tenure_tbl %>%
         title = "Sales Agent Average Tenure (Days)"
     ) %>%
     cols_width(columns = everything() ~ px(170)) %>%
+    fmt_number(columns = everything(), decimals = 0) %>%
     gtsave_extra(filename = "../png/sales_agent_avg_tenure.png", zoom = 2)
   
 
@@ -809,8 +861,13 @@ metrics_product_and_sales_agent_tbl %>%
     ) %>%
     cols_width(
         columns = c("Sales Agent", "Combined Score",  "Score Category", "Gtx Plus Basic") 
-        ~ px(175)
+        ~ px(155)
     ) %>% 
+    cols_width(
+      columns = -c("Sales Agent", "Combined Score", "Score Category")
+      ~ px(90)
+    ) %>% 
+    tab_options(table.font.size = 15) %>% 
     gtsave_extra(filename = "../png/top_bottom_3_sales_agents.png", zoom = 2)
 
 

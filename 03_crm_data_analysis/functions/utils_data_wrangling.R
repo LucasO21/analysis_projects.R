@@ -61,3 +61,51 @@ get_metrics_vs_company_data_prepped <- function(crm_data, segment_data, sort_col
     return(vs_company_tbl)
     
 }
+
+
+# Get Metrics Trend Data Prepped ----
+get_metrics_trend_data_prepped <- function(data, group_column = "engage_month", segment_name) {
+  
+    # rlang setup
+    group_column_sym <- rlang::ensym(group_column)
+    segment_name_sym <- rlang::ensym(segment_name)
+
+    # data aggregation
+    if (!missing(segment_name)) {
+        grouped_tbl <- data %>% 
+        group_by(!!group_column_sym, !!segment_name_sym)
+       } else {
+         grouped_tbl <- data %>% 
+            group_by(!!group_column_sym)
+    }
+    
+    # metrics trend table
+    metrics_trend_tbl <- grouped_tbl %>%
+    summarise(
+        deals_total = n_distinct(opportunity_id),
+        
+        deals_closed = n_distinct(
+            opportunity_id[
+                time_to_close_bin %in% c("0 - 30 days", "31 - 60 days") & deal_stage == "Won"
+            ], na.rm = TRUE
+        ),
+        total_close_value = sum(
+            close_value[
+                time_to_close_bin %in% c("0 - 30 days", "31 - 60 days") & deal_stage == "Won"
+            ], na.rm = TRUE
+        ),
+        avg_time_to_close = mean(
+            time_to_close[
+                time_to_close_bin %in% c("0 - 30 days", "31 - 60 days") & deal_stage == "Won"
+            ], na.rm = TRUE
+        )
+    ) %>%
+    ungroup() %>% 
+    mutate(deals_close_rate = deals_closed / deals_total, .after = deals_closed) %>%
+    mutate(avg_deal_value = total_close_value / deals_closed) %>%
+    mutate(deal_event_value = deals_close_rate * avg_deal_value) %>%
+    drop_na()
+    
+    # return
+    return(metrics_trend_tbl)
+}
