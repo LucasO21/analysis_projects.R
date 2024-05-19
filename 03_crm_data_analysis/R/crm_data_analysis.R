@@ -824,15 +824,26 @@ sales_agent_metrics_category_tbl %>%
 
 
 # *************************************************************************
+# **** ----
 # 11.0 METRICS BY PRODUCTS ----
 # *************************************************************************
 
 # 11.1 Metrics by Products Data ----
-metrics_products_tbl <- get_metrics_trend_data_prepped(
+get_metrics_trend_data_prepped(
     data         = crm_usa_tbl,
     group_column = "product"
 ) %>% 
-    arrange(desc(deal_event_value))
+    arrange(desc(deal_event_value)) %>% 
+  get_gt_table(
+      title = "Metrics Analysis (by Product)",
+      green_format_column = "total_close_value"
+  ) %>% 
+  fmt_number(columns = "Avg Time To Close", decimals = 0) %>%
+  tab_options(table.font.size = 15) %>% 
+  cols_width(columns = c(everything()) ~ px(100)) %>%
+  cols_width(columns = c("Product") ~ px(120)) %>%
+  cols_width(columns = c("Deals Total") ~ px(90)) %>%
+  gtsave_extra(filename = "../png/products_metrics_table.png", zoom = 2)
 
 # 11.2 Products by Sales Agent ----
 metrics_product_and_sales_agent_tbl <- crm_usa_tbl %>% 
