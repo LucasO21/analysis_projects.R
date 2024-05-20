@@ -674,10 +674,15 @@ sales_agent_metrics_tbl <- crm_usa_tbl %>%
     ) %>% 
     select(sales_agent, manager, regional_office, everything())
 
+sales_agent_metrics_tbl %>% View()
+
 # 10.1.2 Get Quantiles ----
 sales_agent_metrics_score_tbl <- sales_agent_metrics_tbl %>% 
-    get_quantiles(c("deals_close_rate", "avg_deal_value", "avg_time_to_close")) %>% 
-    mutate(combined_score = deals_close_rate_qtile + avg_deal_value_qtile + avg_time_to_close_qtile) %>% 
+    get_quantiles(c("deals_close_rate", "avg_deal_value", "deal_event_value", "avg_time_to_close")) %>% 
+    mutate(
+      combined_score = deals_close_rate_qtile + avg_deal_value_qtile + 
+        avg_time_to_close_qtile + deal_event_value_qtile
+    ) %>% 
     select(-c(total_close_value, deals_total, deals_closed)) 
 
 sales_agent_metrics_score_tbl %>% glimpse()
@@ -692,7 +697,7 @@ sales_agent_metrics_category_tbl <- sales_agent_metrics_score_tbl %>%
         combined_score > threshold[2] ~ "Top Performers"
     ))
 
-sales_agent_metrics_category_tbl %>% count(score_category)
+sales_agent_metrics_category_tbl %>% count(score_category) %>% mutate(prop = n / sum(n))
 
 
 # 10.2 Performance Categories GT Tables ----
@@ -836,7 +841,7 @@ get_metrics_trend_data_prepped(
     arrange(desc(deal_event_value)) %>% 
   get_gt_table(
       title = "Metrics Analysis (by Product)",
-      green_format_column = "total_close_value"
+      green_format_column = "deal_event_value"
   ) %>% 
   fmt_number(columns = "Avg Time To Close", decimals = 0) %>%
   tab_options(table.font.size = 15) %>% 
@@ -872,11 +877,11 @@ metrics_product_and_sales_agent_tbl %>%
     ) %>%
     cols_width(
         columns = c("Sales Agent", "Combined Score",  "Score Category", "Gtx Plus Basic") 
-        ~ px(155)
+        ~ px(140)
     ) %>% 
     cols_width(
       columns = -c("Sales Agent", "Combined Score", "Score Category")
-      ~ px(90)
+      ~ px(80)
     ) %>% 
     tab_options(table.font.size = 15) %>% 
     gtsave_extra(filename = "../png/top_bottom_3_sales_agents.png", zoom = 2)
@@ -885,6 +890,7 @@ metrics_product_and_sales_agent_tbl %>%
 
 
 # *************************************************************************
+# **** ----
 # REPREX ----
 # *************************************************************************
 

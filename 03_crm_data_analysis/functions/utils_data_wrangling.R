@@ -24,6 +24,9 @@ get_quantiles <- function(df, columns) {
         df[[quantile_col_name]] <- find_quantile_rank(df[[col]])
     }
     
+    # Reverse quantile ranks for avg time to close for consistency with common usage
+    df <- df %>% mutate_at(vars(ends_with("close_qtile")), ~ 5 - .)
+    
     return(df)
 }
 
