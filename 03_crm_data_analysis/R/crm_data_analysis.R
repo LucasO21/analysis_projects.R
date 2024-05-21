@@ -237,9 +237,11 @@ segments_time_to_close <- segments %>%
             avg_time_to_close = mean(time_to_close, na.rm = TRUE),
             .by = c(segment)
         ) %>% 
-        arrange((avg_time_to_close)) %>% 
-        drop_na()
-}) 
+        arrange((avg_time_to_close))
+        # drop_na() %>% 
+        # `colnames<-`(c("segment", "avg_time_to_close")) %>% 
+        # mutate(category = !!segment)
+})
 
 # 7.4 Revenue by Sector (GT Table) ----
 segments_revenue_tbl[[1]] %>% 
@@ -280,26 +282,54 @@ segments_revenue_tbl[[3]] %>%
 
 # 7.7 Time to Close by Sector (GT Table) ----
 segments_time_to_close[[1]] %>% 
-    get_gt_table(title = "Avg Time to Close (Sector)") %>% 
-    cols_width(everything() ~ px(250)) %>% 
-    fmt_number(columns = everything(), decimals = 1) %>% 
-    gtsave_extra(filename = "../png/time_to_close_sector.png", zoom = 3)
+  get_gt_table(
+    green_format_column = "avg_time_to_close",
+    title = "Avg Time to Close (Sector)"
+  ) %>% 
+  tab_options(table.font.size = 15) %>% 
+  cols_width(everything() ~ px(175)) %>% 
+  fmt_number(columns = everything(), decimals = 1) %>% 
+  gtsave_extra(filename = "../png/time_to_close_sector.png", zoom = 3)
 
 # 7.8 Time to Close by Employee Size (GT Table) ----
 segments_time_to_close[[2]] %>%
-    get_gt_table(title = "Avg Time to Close (Emp Size)") %>% 
-    cols_width(everything() ~ px(250)) %>% 
-    fmt_number(columns = everything(), decimals = 1) %>% 
-    gtsave_extra(filename = "../png/time_to_close_emp_size.png", zoom = 2)
+  get_gt_table(
+    title = "Avg Time to Close (Emp Size)",
+    green_format_column = "avg_time_to_close"
+  ) %>% 
+  tab_options(table.font.size = 15) %>% 
+  cols_width(everything() ~ px(175)) %>% 
+  fmt_number(columns = everything(), decimals = 1) %>% 
+  gtsave_extra(filename = "../png/time_to_close_emp_size.png", zoom = 2)
 
 # 7.9 Time to Close by Regional Office (GT Table) ----
 segments_time_to_close[[3]] %>%
-    get_gt_table(title = "Avg Time to Close (Regional Office)") %>% 
-    cols_width(everything() ~ px(250)) %>% 
-    fmt_number(columns = everything(), decimals = 1) %>% 
-    gtsave_extra(filename = "../png/time_to_close_reg_office.png", zoom = 2)
+  get_gt_table(
+    title = "Avg Time to Close (Office)",
+    green_format_column = "avg_time_to_close"
+  ) %>% 
+  tab_options(table.font.size = 15) %>% 
+  cols_width(everything() ~ px(175)) %>% 
+  fmt_number(columns = everything(), decimals = 1) %>% 
+  gtsave_extra(filename = "../png/time_to_close_reg_office.png", zoom = 2)
 
-
+# segments_time_to_close %>% 
+#   select(-category) %>%
+#   gt(rowname_col = "segment") %>% 
+#   gt_theme_guardian() %>% 
+#   tab_row_group(label = "Sector", rows = matches("^[A-Z]")) %>%
+#   tab_row_group(label = "Regional Office", rows = c("East", "Central", "West")) %>% 
+#   tab_row_group(label = "Employee Size", rows = matches("^[0-9]")) %>% 
+#   row_group_order(groups = c("Sector", "Employee Size", "Regional Office")) %>% 
+#   cols_label(avg_time_to_close = "") %>% 
+#   fmt_number(columns = avg_time_to_close, decimals = 1) %>% 
+#   cols_width(columns = "segment" ~ px(150)) %>% 
+#   tab_options(table.font.size = 15) %>% 
+#   gt_color_rows(columns = avg_time_to_close, palette = c("#d9ead3", "#6aa84f")) %>% 
+#   tab_options(heading.title.font.size = px(24)) %>% 
+#   tab_header(title = "Average Time to Close (in Days)")
+  
+  
 
 # *************************************************************************
 # **** ----
@@ -314,7 +344,7 @@ segments_time_to_close[[3]] %>%
 #' - Average Deal Event Value
 
 # 8.1 Time to Close Buckets ----
-segment_name <- "sector" # change to either "employee_size" or "regional_office" and re-run code below
+segment_name <- "employee_size" # change to either "employee_size" or "regional_office" and re-run code below
 segment_name_caps <- segment_name %>% str_replace_all("_", " ") %>% str_to_title()
 
 {
