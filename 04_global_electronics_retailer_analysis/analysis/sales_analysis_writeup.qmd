@@ -1,0 +1,258 @@
+---
+title: "Sales Data Exploratory Analysis"
+subtitle: "A Deep Dive into Drivers of Sales Performance"
+date: "2024-06-12"
+author: "Lucas Okwudishu"
+format: 
+  pdf:
+    fig-pos: "H"
+    toc: true
+    toc-depth: 2
+    number-sections: true
+    number-offset: 1
+    number-offset-section: true
+    lof: true
+    lot: false
+    # include-in-header:
+    #   text: |
+    #     \usepackage{titlesec}
+    #     \titleformat{\paragraph}[block]{\normalfont\Large\bfseries}{\theparagraph}{1em}{}
+    #     \titlespacing*{\paragraph}{0pt}{\baselineskip}{\baselineskip}
+    #     \titlespacing*{\subsubsection}{0pt}{\baselineskip}{\baselineskip}
+    #     \usepackage{etoolbox}
+    #     \preto{\subsubsection}{\clearpage}
+# format: pdf
+# toc: true
+# toc-depth: 2
+# number-sections: true
+# number-offset: 1
+# number-offset-section: true
+# lof: true
+# lot: false
+# editor: visual
+---
+
+\newpage
+
+## Executive Summary
+
+This report presents the first phase of a comprehensive analysis aimed at developing marketing and sales strategies
+for a global electronics retailer, and focuses on online sales in the United States. This phase, titled __"Exploratory Data Analysis"__,  examines sales trends from January 2016 to February 2021, segmented into three distinct periods: Pre-Peak Sales (January 2016 - May 2018), Peak Sales (June 2018 - February 2020), and Post-Peak Sales (March 2020 - February 2021).
+
+Key findings from this analysis include:
+
+- __Sales Trends:__ Monthly sales peaked in February 2019, with significant spikes in December 2018, May 2019, and August 2019. Post-February 2020, a steady decline in sales is observed.
+
+- __Customer Behavior:__ Repeat customers significantly contribute to overall sales, with __90%__ of total
+sales coming from repeat customers. Additionally, __23%__ of customers have made at least two purchases and __18%__ making three or more purchases.
+
+- __Sales Decline Factors:__ The recent sales decline is attributed to a noticeable drop in the total customer count, a slight decrease in the proportion of repeat customers, and a minor decline in average spend per customer.
+
+The analysis concludes that no single customer cohort or product category is driving the sales decline. Instead, multiple factors collectively contribute to the trend. Based on these insights, our recommendation is to implement a comprehensive customer strategy focused on acquiring new customers and encouraging more frequent purchases from existing customers.
+
+------------------------------------------------------------------------
+
+\newpage
+
+## Exploratory Data Analysis
+
+In this phase, we focus on just understanding aspects of our retail data such as customer segments, products, product categories, and sales trends. To reproduce the analysis, see section 5.0 of this script.
+
+### Date Range
+
+Our data ranges from January 2016 to February 2020.
+
+### Top 10 Sales by Category
+
+```{r echo=FALSE, fig.cap='Top 10 Sales by Category', out.width='100%', fig.align='center'}
+knitr::include_graphics('../png/eda/top_10_sales_by_category.png')
+```
+
+Computers lead all categories in terms of sales with __\$2M__ worth of sales and __34%__ of total sales. Except Computers and Home Appliances, all other categories have not hit the __\$1M__ mark in terms of sales. Games and Toys on the other end has generated __\$83K__ in sales which is only __1.37%__ of total sales.
+
+### Top 20 Sales by Product & Category
+
+__8__ of the top 20 products by sales are from the Computers category. The other __2__ products are from TV and Video and Home Appliances.
+
+\newpage
+
+```{r echo=FALSE, fig.cap='Top 20 Sales by Products & Categories', out.width='100%', fig.align='center'}
+knitr::include_graphics('../png/eda/top_20_sales_by_products_category.png')
+```
+
+### Top 10 Sales by State
+
+These 10 states account for __51%__ of all sales.
+
+```{r echo=FALSE, tab.cap='Top 10 Sales by State', out.width='100%', fig.align='center'}
+knitr::include_graphics('../png/eda/top_10_sales_by_states.png')
+
+```
+
+------------------------------------------------------------------------
+
+\newpage
+
+## Sales Trend Deepdive
+
+### Sales Trend Overall (Online)
+
+As mentioned earlier, we can see a steady upward trend in online sales with a peak sales period between June 2018 and Feb 2020. Thus, going forward, we can break our analysis timeframe into 3 periods -
+
+-   **Pre Peak Sales Period:** January 2016 - May 2018
+-   **Peak Sales Period:** June 2020 - February 2020
+-   **Post Peak Sales Period:** March 2020 - February 2021
+
+```{r echo=FALSE, fig.cap='Sales Trend (Online)', out.width='90%', fig.align='center'}
+knitr::include_graphics('../png/eda/sales_trend_overall_online.png')
+
+```
+
+Monthly sales peaked in February 2019 with total sales of __\$281K__. Other high points include December 2018 __(\$214K)__, May 2019 __(\$238K)__ and August 2019 __(\$211K)__. However, after Feb 2020 we start to see a steady decline in monthly sales. Going forward, senior management would like to ensure that sales do not dip below pre June 2018 levels.
+
+To investigate this recent sales decline further we can look at sales trends from different angles to see if certain product or customer cohorts may be causing this decline. For example, is there a possibility that customers are starting to prefer in-store sales compared to online? This is highly unlikely. We can expect to see the opposite, customers prefer to shop online and avoid brick-and-mortar stores. However, to be sure, let’s look at the sales trend for brick-and-mortar stores in the US over the same timeframe.
+
+### Sales Trend Overall (In-Store)
+
+```{r echo=FALSE, fig.cap='Sales Trend (In-Instore)', out.width='90%', fig.align='center'}
+knitr::include_graphics('../png/eda/sales_trend_overall_instore.png')
+```
+
+From the plot above, we can see the sales trend for in-store sales follows the same pattern as the online sales trend with a peak sales period between June 2018 and Feb 2020 as well. This tells us that in-store sales are currently not cannibalizing the online sales and thus, NOT the reason for the recent sales decline.
+
+---
+
+\newpage
+
+### Sales Trend by Product Category
+
+Are certain product categories responsible for the sales decline?
+
+```{r echo=FALSE, fig.cap='Sales Trend by Product Category', out.width='100%', fig.align='center'}
+knitr::include_graphics('../png/eda/sales_trend_by_category.png')
+```
+
+**Unlikely.** From the plot above, we can see that all product categories follow a similar pattern as the overall trend. Some categories like Home Appliances, Game and Toys are declining at a much faster rate than categories like TV and Video, Music, Movies and Audio Books and Cell Phones.
+
+---
+
+\newpage
+
+### Sales Trend by State
+
+Are certain states responsible for the sales decline?
+
+```{r echo=FALSE, fig.cap='Sales Trend by State', out.width='100%', fig.align='center'}
+knitr::include_graphics('../png/eda/sales_trend_by_state.png')
+```
+
+**Unlikely.** Looking at the top 9 states in terms of sales, we also see a similar pattern as the overall trend.
+
+---
+
+\newpage
+
+### Sales Trend by Customer Age Group
+
+Are certain customer age groups responsible for the recent sales decline?
+
+```{r echo=FALSE, fig.cap='Sales Trend by Customer Age Groups', out.width='100%', fig.align='center'}
+knitr::include_graphics('../png/eda/sales_trend_by_customer_age.png')
+```
+
+**Unlikely.** All age groups show a similar pattern as the overall trend. Interestingly the 50+ age cohort appears to have higher sales than all other age cohorts. Normally we would expect the 21 - 35 and 36 - 50 age cohorts to be more tech-savvy age cohorts. In conclusion, the data indicates that no single customer cohort or product category is solely responsible for the recent sales decline.
+
+---
+
+\newpage
+
+## Analysis of Repeat Customers
+
+Understanding the behavior of repeat purchasers helps in evaluating the health of a retail business. Repeat customers often represent a stable and reliable revenue stream, contributing significantly to sustained sales performance. In this section, we will analyze the impact of repeat purchasers on the overall sales trend, with a specific focus on determining whether the recent sales decline is correlated with changes in the proportion of repeat customers. This will provide insights into the role of repeat customers in the current sales trend and inform strategies for customer retention and sales growth. 
+
+### Sales vs Proportion of Repeat Customers (Overall)
+
+```{r echo=FALSE, fig.cap='Repeat Customers % of Total Customers', out.width='100%', fig.align='center'}
+knitr::include_graphics('../png/eda/repeat_purchasers_table.png')
+```
+
+With 73% of customers making repeat purchases and also accounting for a staggering 91% of total sales, it is evident that loyal customers are the backbone of the retailer's revenue stream. Next, we can also look at the distribution of repeat purchasers by number of purchases.
+
+Next, we can also look at the distribution of repeat purchasers by number of purchases.
+
+```{r echo=FALSE, fig.cap='Repeat Purchasers by Number of Unique Purchases', out.width='80%', fig.align='center'}
+#| fig-pos: 'H'
+knitr::include_graphics('../png/eda/repeat_purchase_customers_count.png')
+```
+
+__23%__ of customers have made at least two purchases and __18%__ have made three purchases. This indicates that repeat customers significantly contribute to the business's success. The large proportion of sales from repeat purchasers suggests that customer retention is not a major issue.
+
+However, the recent decline in sales raises important questions. Since the majority of sales are driven by repeat customers, a decrease in these loyal customers could significantly impact overall sales. This highlights the need to improve strategies not only to retain existing customers but also to encourage them to make more frequent purchases, helping to prevent potential drops in overall sales.
+
+### Sales vs Total Customers Trend (Monthly)
+
+Throughout the observed period, the proportion of repeat customers remained steady, often exceeding 60% and peaking around 75%. Despite the normalization of sales after March 2020, the proportion of repeat customers remained substantial. However, the decline in total sales post-March 2020 coincides with a slight decrease in repeat customers, reaching its lowest point of 60% in November 2020.
+
+```{r echo=FALSE, fig.cap='Repeat Purchasers by Number of Unique Purchases', out.width='90%', fig.align='center'}
+#| fig-pos: 'H'
+knitr::include_graphics('../png/eda/sales_revenue_trend_repeat_customers.png')
+```
+
+If we look at our 3 key sales periods, Pre-Peak Sales (before June 2018), Peak Sales (June 2018 - February 2020), and Post-Peak Sales (after February 2020), we see that the average proportion of repeat customers was 77.5% during the Post-Peak period, compared to 78.3% during the Peak period and 80% during the Pre-Peak period. During the Pre-Peak period, the high proportion of repeat customers likely did not directly result in increased sales, as this was a ramp-up period for acquiring new customers and familiarizing them with our products. However, in the Post-Peak period, we would expect the high proportion of repeat customers to positively impact sales, but that does not seem to be the case here.
+
+---
+
+\newpage
+
+### Total Customers Trend (Monthly)
+
+The plot below shows the total customers monthly.
+
+```{r echo=FALSE, fig.cap='Total Customers by Month', out.width='90%', fig.align='center'}
+#| fig-pos: 'H'
+knitr::include_graphics('../png/eda/total_customers_by_month_trend.png')
+```
+
+During the Pre-Peak Sales Period, the number of customers per month shows a steady upward trend, despite seasonal fluctuations. Starting from a relatively low base, there is a gradual increase in customer count, reflecting the initial growth phase of the retailer. By May 2018, the customer base had grown significantly, setting the stage for the subsequent peak period.
+
+The Peak Sales Period is characterized by a substantial surge in the number of customers. This phase represents the retailer's period of exponential growth, driven by successful marketing strategies, product launches, or external factors.
+
+The Post-Peak Sales Period shows a noticeable decline in the number of customers per month. By early 2021, customer numbers have not returned to the peak levels observed in 2019, highlighting the challenge of sustaining growth post-peak. The declining trend suggests a need to refocus efforts on acquiring new customers, to regain momentum and stabilize customer counts.
+
+---
+
+\newpage
+
+### Average Sales per Customer Trend (Monthly)
+
+```{r echo=FALSE, fig.cap='Average Sales Customer by Month', out.width='90%', fig.align='center'}
+knitr::include_graphics('../png/eda/avg_spend_per_customer_trend.png')
+```
+
+The analysis of customer behavior from February 2016 to February 2021 reveals distinct phases in spending and customer trends. During the Pre-Peak and Peak Sales Periods, the retailer experienced steady growth and high average spending per customer, with the occasional seasonal fluctuation. However, the Post-Peak Sales Period shows a decline in customer numbers and increased variability in average spending, suggesting challenges in maintaining customer engagement and spending levels. These insights highlight the critical need for targeted strategies to re-engage customers and stabilize spending, ensuring sustained revenue growth and mitigating the impact of the recent sales decline.
+
+---
+
+\newpage
+
+## Summary & Recommendations 
+
+The analysis of customer behavior and spending reveals important insights into the sales trends of our global electronics retailer. The data shows distinct phases: steady growth in the Pre-Peak Sales Period, significant spikes in the Peak Sales Period, and normalization in the Post-Peak Sales Period. However, without additional context on sales strategies, promotions, and external market conditions during the Peak Sales Period, we cannot conclusively determine the causes behind the increased sales observed during this phase.
+Based on the data, our hypothesis attributes the recent sales decline to several factors. 
+
+```{r echo=FALSE, fig.cap='Average Sales Customer by Month', out.width='100%', fig.align='center'}
+knitr::include_graphics('../png/eda/summary_total_sales_customers_by_period.png')
+```
+
+1. there is a noticeable decline in the total customer count during the Post-Peak Sales Period.
+
+2.  Secondly, there is a slight decline in the proportion of repeat customers, which has traditionally been a key driver of sales. 
+
+3. Lastly, there is a minor decline in the average spend per customer in the Post-Peak Sales Period, which contributes to the overall sales decline but may not be as significant as the first two factors.
+
+To address our initial goal of ensuring that sales do not dip below Pre-Peak Sales Period levels, our recommendation is to implement an overall customer strategy focused on both acquiring new customers and encouraging existing customers to purchase more frequently. This strategy should involve targeted marketing campaigns, loyalty programs, and personalized engagement to re-engage past customers and attract new ones, ensuring sustained sales growth and stability.
+
+---
+
+
+
