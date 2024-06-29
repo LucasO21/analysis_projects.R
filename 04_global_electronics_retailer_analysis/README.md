@@ -6,7 +6,7 @@
 
 This project involves analysis of sales data for a global electronics retailer. The main goal is to address concerns from senior management about recent sales trends. Despite experiencing significant growth between June 2018 and Feb 2020, sales have started to return to earlier levels. There is a concern that sales could fall below the levels seen before June 2018. Through detailed data analysis, we aim to identify if there are factors contributing to the recent sales decline (post Feb 2020) and develop strategies to maintain and improve sales performance.
 
-**Checkout the full analysis write up on [Medium](https://clfo2014.medium.com/sales-data-analysis-7b3b3b3b1b7).**
+**Checkout the full analysis write up on [Medium](https://clfo2014.medium.com/sales-data-exploratory-analysis-c19d87dc795b).**
 
 ---
 
