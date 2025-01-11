@@ -13,7 +13,8 @@ not committed to this repo to avoid push conflicts due to large files.
 
 1. [Starbucks Ingredients Analysis](https://github.com/LucasO21/analysis_projects.R/tree/master/01_starbucks_ingredients_analysis)
 2. [Customer Segmentation in Banking](https://github.com/LucasO21/analysis_projects.R/tree/master/02_customer_segmentation_banking)
-2. [CRM Data Analysis](https://github.com/LucasO21/analysis_projects.R/tree/master/03_crm_data_analysis)
+3. [CRM Data Analysis](https://github.com/LucasO21/analysis_projects.R/tree/master/03_crm_data_analysis)
+4. [Sales Data Exploratory Analysis](https://github.com/LucasO21/analysis_projects.R/tree/master/04_global_electronics_retailer_analysis)
 
 ---
 
